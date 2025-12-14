@@ -1,4 +1,4 @@
-package com.tourly.api
+package com.tourly.core
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
