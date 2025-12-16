@@ -49,9 +49,6 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/test/public").permitAll()
 
-                    // Admin endpoints - only for GUIDE role
-                    .requestMatchers("/api/test/admin").hasRole("GUIDE")
-
                     // All other endpoints require authentication
                     .anyRequest().authenticated()
             }
