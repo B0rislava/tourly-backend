@@ -4,6 +4,7 @@ import com.tourly.core.api.dto.auth.LoginRequest
 import com.tourly.core.api.dto.auth.LoginResponse
 import com.tourly.core.api.dto.auth.RegisterRequest
 import com.tourly.core.api.dto.auth.RegisterResponse
+import com.tourly.core.api.dto.User
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.security.JWTUtil
@@ -66,8 +67,13 @@ class AuthService(
 
         return LoginResponse(
             token = token,
-            email = user.email,
-            role = user.role
+            user = User(
+                id = user.id,
+                email = user.email,
+                firstName = user.firstName,
+                lastName = user.lastName,
+                role = user.role
+            )
         )
     }
 }
