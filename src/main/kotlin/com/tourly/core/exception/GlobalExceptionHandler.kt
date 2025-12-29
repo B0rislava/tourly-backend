@@ -33,6 +33,28 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.httpStatus).body(response)
     }
 
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException::class)
+    fun handleBadCredentials(ex: org.springframework.security.authentication.BadCredentialsException): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.UNAUTHORIZED
+        val response = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = "Invalid email or password"
+        )
+        return ResponseEntity.status(errorCode.httpStatus).body(response)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.BAD_REQUEST
+        val response = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = ex.message ?: "Invalid argument"
+        )
+        return ResponseEntity.status(errorCode.httpStatus).body(response)
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {
         // In a real app, use a logger here (e.g., Slf4j)

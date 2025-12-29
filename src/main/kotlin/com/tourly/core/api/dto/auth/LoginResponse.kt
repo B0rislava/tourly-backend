@@ -1,9 +1,8 @@
 package com.tourly.core.api.dto.auth
 
-import com.tourly.core.data.enumeration.UserRole
+import com.tourly.core.api.dto.User
 
 data class LoginResponse(
     val token: String,
-    val email: String,
-    val role: UserRole
+    val user: User
 )
