@@ -25,4 +25,5 @@ class CustomUserDetails(
     fun getFirstName(): String = user.firstName
     fun getLastName(): String = user.lastName
     fun getRole(): String = user.role.name
+    fun getProfilePictureUrl(): String? = user.profilePictureUrl
 }
