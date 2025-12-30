@@ -1,6 +1,6 @@
 package com.tourly.core.api.controller
 
-import com.tourly.core.api.dto.User
+import com.tourly.core.api.dto.UserDto
 import com.tourly.core.service.TestService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -39,13 +39,13 @@ class TestController(
 
     // Get all users - secured endpoint
     @GetMapping("/users")
-    fun getAllUsers(): ResponseEntity<List<User>> {
+    fun getAllUsers(): ResponseEntity<List<UserDto>> {
         return ResponseEntity.ok(testService.getAllUsers())
     }
 
     // Get user by ID - secured endpoint
     @GetMapping("/users/{id}")
-    fun getUserById(@PathVariable id: Long): ResponseEntity<User> {
+    fun getUserById(@PathVariable id: Long): ResponseEntity<UserDto> {
         val user = testService.getUserById(id)
         return if (user != null) {
             ResponseEntity.ok(user)
@@ -56,7 +56,7 @@ class TestController(
 
     // Create new user - secured endpoint
     @PostMapping("/users")
-    fun createUser(@RequestBody user: User): ResponseEntity<User> {
+    fun createUser(@RequestBody user: UserDto): ResponseEntity<UserDto> {
         val createdUser = testService.createUser(user)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser)
 
@@ -64,7 +64,7 @@ class TestController(
 
     // Create new user - secured endpoint
     @GetMapping("/me")
-    fun getUserByEmail(authentication: Authentication): ResponseEntity<User> {
+    fun getUserByEmail(authentication: Authentication): ResponseEntity<UserDto> {
         val user = testService.getUserByEmail(authentication.name)
         return if (user != null) {
             ResponseEntity.ok(user)

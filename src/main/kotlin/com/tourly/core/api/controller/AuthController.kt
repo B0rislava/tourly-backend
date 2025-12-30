@@ -1,9 +1,9 @@
 package com.tourly.core.api.controller
 
-import com.tourly.core.api.dto.auth.LoginRequest
-import com.tourly.core.api.dto.auth.LoginResponse
-import com.tourly.core.api.dto.auth.RegisterRequest
-import com.tourly.core.api.dto.auth.RegisterResponse
+import com.tourly.core.api.dto.auth.LoginRequestDto
+import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RegisterRequestDto
+import com.tourly.core.api.dto.auth.RegisterResponseDto
 import com.tourly.core.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -17,13 +17,13 @@ class AuthController(
 ) {
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody loginRequest: LoginRequest): ResponseEntity<LoginResponse> {
-        val response = authService.login(loginRequest)
+    fun login(@Valid @RequestBody loginRequestDto: LoginRequestDto): ResponseEntity<LoginResponseDto> {
+        val response = authService.login(loginRequestDto)
         return ResponseEntity.ok(response)
     }
 
     @PostMapping("/register")
-    fun register(@Valid @RequestBody registerRequest: RegisterRequest): ResponseEntity<RegisterResponse> {
+    fun register(@Valid @RequestBody registerRequest: RegisterRequestDto): ResponseEntity<RegisterResponseDto> {
         val response = authService.register(registerRequest)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }

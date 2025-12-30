@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class RegisterRequest(
+data class RegisterRequestDto(
     @field:NotBlank(message = "Email is required")
     @field:Email(message = "Email must be valid")
     @field:Size(min = 5, max = 50, message = "Email must be between 5 and 50 characters")

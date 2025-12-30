@@ -1,10 +1,10 @@
 package com.tourly.core.service
 
-import com.tourly.core.api.dto.auth.LoginRequest
-import com.tourly.core.api.dto.auth.LoginResponse
-import com.tourly.core.api.dto.auth.RegisterRequest
-import com.tourly.core.api.dto.auth.RegisterResponse
-import com.tourly.core.api.dto.User
+import com.tourly.core.api.dto.auth.LoginRequestDto
+import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RegisterRequestDto
+import com.tourly.core.api.dto.auth.RegisterResponseDto
+import com.tourly.core.api.dto.UserDto
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.security.JWTUtil
@@ -21,7 +21,7 @@ class AuthService(
     private val jwtUtil: JWTUtil
 ) {
 
-    fun register(request: RegisterRequest): RegisterResponse {
+    fun register(request: RegisterRequestDto): RegisterResponseDto {
         // Validate email doesn't exist
         if (userRepository.existsByEmail(request.email)) {
             throw IllegalArgumentException("Email already exists")
@@ -34,19 +34,20 @@ class AuthService(
             firstName = request.firstName,
             lastName = request.lastName,
             password = request.password.let { passwordEncoder.encode(it) } ?: throw IllegalArgumentException("Password cannot be null"),
-            role = request.role
+            role = request.role,
+            profilePictureUrl = null
         )
 
         // Save to database
         userRepository.save(user)
 
-        return RegisterResponse(
+        return RegisterResponseDto(
             message = "User registered successfully",
             email = user.email
         )
     }
 
-    fun login(request: LoginRequest): LoginResponse {
+    fun login(request: LoginRequestDto): LoginResponseDto {
         // Authenticate the user
         authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(
@@ -65,14 +66,15 @@ class AuthService(
             roles = listOf(user.role.name)
         )
 
-        return LoginResponse(
+        return LoginResponseDto(
             token = token,
-            user = User(
+            user = UserDto(
                 id = user.id,
                 email = user.email,
                 firstName = user.firstName,
                 lastName = user.lastName,
-                role = user.role
+                role = user.role,
+                profilePictureUrl = user.profilePictureUrl
             )
         )
     }
