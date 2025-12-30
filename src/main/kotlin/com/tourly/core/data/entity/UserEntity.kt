@@ -31,5 +31,8 @@ data class UserEntity(
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
-    val role: UserRole
-    )
+    val role: UserRole,
+
+    @Column(name = "profile_picture_url")
+    val profilePictureUrl: String?
+)
