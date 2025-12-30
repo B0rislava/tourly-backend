@@ -1,6 +1,7 @@
 package com.tourly.core.api.controller
 
-import com.tourly.core.api.dto.User
+import com.tourly.core.api.dto.UserDto
+import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.security.CustomUserDetails
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -18,12 +19,13 @@ class UserController {
             val roleName = userDetails.getRole()
             println("DEBUG: Fetching profile for user: ${userDetails.username}, role: $roleName")
             
-            val user = User(
+            val user = UserDto(
                 id = userDetails.getUserId(),
                 email = userDetails.username,
                 firstName = userDetails.getFirstName(),
                 lastName = userDetails.getLastName(),
-                role = com.tourly.core.data.enumeration.UserRole.valueOf(roleName)
+                role = UserRole.valueOf(roleName),
+                profilePictureUrl = userDetails.getProfilePictureUrl()
             )
             return ResponseEntity.ok(user)
         } catch (e: Exception) {

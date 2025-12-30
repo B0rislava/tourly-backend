@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class LoginRequest(
+data class LoginRequestDto(
 
     @field:Email(message = "Email must be valid")
     @field:NotBlank(message = "Email is required")

@@ -1,6 +1,6 @@
 package com.tourly.core.api.dto.auth
 
-data class RegisterResponse(
+data class RegisterResponseDto(
     val message: String,
     val email: String
 )
