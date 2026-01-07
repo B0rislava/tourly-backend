@@ -1,6 +1,7 @@
 package com.tourly.core.exception
 
 import org.springframework.http.ResponseEntity
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -33,8 +34,8 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.httpStatus).body(response)
     }
 
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException::class)
-    fun handleBadCredentials(ex: org.springframework.security.authentication.BadCredentialsException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(BadCredentialsException::class)
+    fun handleBadCredentials(ex: BadCredentialsException): ResponseEntity<ErrorResponse> {
         val errorCode = ErrorCode.UNAUTHORIZED
         val response = ErrorResponse(
             code = errorCode.code,

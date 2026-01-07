@@ -29,9 +29,18 @@ class UserService(
     fun updateProfile(userId: Long, request: UpdateProfileRequestDto): UserDto {
         val user = findUser(userId)
 
+        if (request.email != user.email) {
+            if (userRepository.existsByEmail(request.email)) {
+                throw APIException(
+                    errorCode = ErrorCode.CONFLICT,
+                    description = "Email already in use: ${request.email}"
+                )
+            }
+            user.email = request.email
+        }
+        
         user.firstName = request.firstName
         user.lastName = request.lastName
-        user.email = request.email
 
         if (!request.password.isNullOrBlank()) {
             user.password = passwordEncoder.encode(request.password).toString()
