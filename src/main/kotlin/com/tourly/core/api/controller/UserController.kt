@@ -5,6 +5,8 @@ import com.tourly.core.api.dto.UserDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
 import com.tourly.core.service.UserService
 import com.tourly.core.data.enumeration.UserRole
+import com.tourly.core.exception.APIException
+import com.tourly.core.exception.ErrorCode
 import com.tourly.core.security.CustomUserDetails
 import com.tourly.core.security.JWTUtil
 import org.springframework.http.ResponseEntity
@@ -50,7 +52,10 @@ class UserController(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
         @RequestBody request: UpdateProfileRequestDto
     ): ResponseEntity<LoginResponseDto> {
-        val userId = userDetails.getUserId() ?: throw IllegalArgumentException("User ID not found")
+        val userId = userDetails.getUserId() ?: throw APIException(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            "User ID not found in principal"
+        )
         val updatedUser = userService.updateProfile(userId, request)
         
         val token = jwtUtil.generateToken(
@@ -71,7 +76,10 @@ class UserController(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
         @org.springframework.web.bind.annotation.RequestParam("file") file: org.springframework.web.multipart.MultipartFile
     ): ResponseEntity<UserDto> {
-        val userId = userDetails.getUserId() ?: throw IllegalArgumentException("User ID not found")
+        val userId = userDetails.getUserId() ?: throw APIException(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            "User ID not found in principal"
+        )
         val updatedUser = userService.updateProfilePicture(userId, file)
         return ResponseEntity.ok(updatedUser)
     }

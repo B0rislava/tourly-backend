@@ -2,8 +2,11 @@ package com.tourly.core.service
 
 import com.tourly.core.api.dto.UpdateProfileRequestDto
 import com.tourly.core.api.dto.UserDto
-import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.repository.UserRepository
+import com.tourly.core.exception.APIException
+import com.tourly.core.exception.ErrorCode
+import com.tourly.core.mapper.UserMapper
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,13 +16,18 @@ import org.springframework.web.multipart.MultipartFile
 class UserService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val cloudinaryService: CloudinaryService
+    private val cloudinaryService: CloudinaryService,
 ) {
 
+    @Transactional(readOnly = true)
+    fun getCurrentUserProfile(userId: Long): UserDto {
+        val user = findUser(userId)
+        return UserMapper.toDto(user)
+    }
+
     @Transactional
-    fun updateProfile(id: Long, request: UpdateProfileRequestDto): UserDto {
-        val user = userRepository.findById(id)
-            .orElseThrow { IllegalArgumentException("User not found") }
+    fun updateProfile(userId: Long, request: UpdateProfileRequestDto): UserDto {
+        val user = findUser(userId)
 
         user.firstName = request.firstName
         user.lastName = request.lastName
@@ -29,31 +37,23 @@ class UserService(
             user.password = passwordEncoder.encode(request.password).toString()
         }
 
-        val updatedUser = userRepository.save(user)
-
-        return mapToDto(updatedUser)
+        return UserMapper.toDto(user)
     }
 
     @Transactional
     fun updateProfilePicture(userId: Long, file: MultipartFile): UserDto {
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
-
         val imageUrl = cloudinaryService.uploadImage(file, userId)
+
+        val user = findUser(userId)
         user.profilePictureUrl = imageUrl
 
-        val updatedUser = userRepository.save(user)
-        return mapToDto(updatedUser)
+        return UserMapper.toDto(user)
     }
 
-    private fun mapToDto(user: UserEntity): UserDto {
-        return UserDto(
-            id = user.id,
-            email = user.email,
-            firstName = user.firstName,
-            lastName = user.lastName,
-            role = user.role,
-            profilePictureUrl = user.profilePictureUrl
-        )
-    }
-}
+    private fun findUser(userId: Long) =
+        userRepository.findByIdOrNull(userId)
+            ?: throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "User not found: $userId"
+                )
+            }
