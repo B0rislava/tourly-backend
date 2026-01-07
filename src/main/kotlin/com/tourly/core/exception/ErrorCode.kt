@@ -12,5 +12,6 @@ enum class ErrorCode(
     RESOURCE_NOT_FOUND("TY-2", "Resource Not Found", HttpStatus.NOT_FOUND),
     BAD_REQUEST("TY-3", "Bad Request", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED("TY-4", "Unauthorized", HttpStatus.UNAUTHORIZED),
-    FORBIDDEN("TY-5", "Forbidden", HttpStatus.FORBIDDEN)
+    FORBIDDEN("TY-5", "Forbidden", HttpStatus.FORBIDDEN),
+    CONFLICT("TY-6", "Conflict", HttpStatus.CONFLICT)
 }
