@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -23,7 +24,7 @@ class JWTAuthFilter(
 
         if (authHeader != null && authHeader.startsWith(ACCESS_TOKEN_PREFIX)) {
             try {
-                val token = authHeader.substring(7)
+                val token = authHeader.removePrefix(ACCESS_TOKEN_PREFIX).trim()
                 val username = jwtUtil.extractUsername(token)
 
                 // Only authenticate if not already authenticated
@@ -41,7 +42,8 @@ class JWTAuthFilter(
                     }
                 }
             } catch (e: Exception) {
-                logger.error("Cannot set user authentication: ${e.message}")
+                (response as HttpServletResponse).sendError(HttpServletResponse.SC_UNAUTHORIZED, e.message)
+                return
             }
         }
 

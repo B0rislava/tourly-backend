@@ -40,3 +40,8 @@ server:
   # servlet:
   #   context-path: /core/${API_VERSION:v1}  # Commented out for simpler development
   port: ${APP_PORT:8080}
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_NAME}
+  api_key: ${CLOUDINARY_KEY}
+  api_secret: ${CLOUDINARY_SECRET}

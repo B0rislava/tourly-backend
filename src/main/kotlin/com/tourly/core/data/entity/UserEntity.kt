@@ -18,21 +18,21 @@ data class UserEntity(
     val id: Long? = null,
 
     @Column(name = "email", unique = true, nullable = false)
-    val email: String,
+    var email: String,
 
     @Column(name = "first_name", nullable = false)
-    val firstName: String,
+    var firstName: String,
 
     @Column(name = "last_name", nullable = false)
-    val lastName: String,
+    var lastName: String,
 
     @Column(nullable = false)
-    val password: String,
+    var password: String,
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     val role: UserRole,
 
     @Column(name = "profile_picture_url")
-    val profilePictureUrl: String?
+    var profilePictureUrl: String?
 )
