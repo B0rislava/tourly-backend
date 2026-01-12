@@ -15,10 +15,10 @@ class JWTUtil {
     @Value($$"${jwt.secret}")
     private lateinit var jwtSecret: String
 
-    @Value($$"${jwt.accessTokenExpirationMs:900000}")
+    @Value($$"${jwt.accessTokenExpirationMs}")
     private var accessTokenExpirationMs: Long = 900000 // Default 15 minutes
 
-    @Value("\${jwt.refreshTokenExpirationMs:604800000}")
+    @Value($$"${jwt.refreshTokenExpirationMs}")
     var refreshTokenExpirationMs: Long = 604800000 // Default 7 days
 
     private val secretKey: SecretKey by lazy {
