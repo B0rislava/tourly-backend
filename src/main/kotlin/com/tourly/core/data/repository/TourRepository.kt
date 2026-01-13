@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TourRepository : JpaRepository<TourEntity, Long> {
     fun findAllByGuideIdOrderByCreatedAtDesc(guideId: Long): List<TourEntity>
+    fun findAllByStatusOrderByCreatedAtDesc(status: String): List<TourEntity>
 }

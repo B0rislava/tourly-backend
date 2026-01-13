@@ -37,4 +37,10 @@ class TourController(
         val tours = tourService.getToursByGuide(email)
         return ResponseEntity.ok(tours)
     }
+
+    @GetMapping
+    fun getAllTours(): ResponseEntity<List<CreateTourResponseDto>> {
+        val tours = tourService.getAllActiveTours()
+        return ResponseEntity.ok(tours)
+    }
 }
