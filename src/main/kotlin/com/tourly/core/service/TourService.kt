@@ -59,4 +59,10 @@ class TourService(
         return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
             .map(TourMapper::toDto)
     }
+
+    @Transactional(readOnly = true)
+    fun getAllActiveTours(): List<CreateTourResponseDto> {
+        return tourRepository.findAllByStatusOrderByCreatedAtDesc("ACTIVE")
+            .map(TourMapper::toDto)
+    }
 }
