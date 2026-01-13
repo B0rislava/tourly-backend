@@ -4,8 +4,7 @@ import com.tourly.core.api.dto.UpdateProfileRequestDto
 import com.tourly.core.api.dto.UserDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
 import com.tourly.core.service.UserService
-import com.tourly.core.exception.APIException
-import com.tourly.core.exception.ErrorCode
+import com.tourly.core.service.AuthService
 import com.tourly.core.security.CustomUserDetails
 import com.tourly.core.security.JWTUtil
 import jakarta.validation.Valid
@@ -24,7 +23,8 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/users")
 class UserController(
     private val userService: UserService,
-    private val jwtUtil: JWTUtil
+    private val jwtUtil: JWTUtil,
+    private val authService: AuthService
 ) {
 
     @GetMapping("/me")
@@ -39,10 +39,7 @@ class UserController(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
         @Valid @RequestBody request: UpdateProfileRequestDto
     ): ResponseEntity<LoginResponseDto> {
-        val userId = userDetails.getUserId() ?: throw APIException(
-            ErrorCode.INTERNAL_SERVER_ERROR,
-            "User ID not found in principal"
-        )
+        val userId = userDetails.getUserId()
         val updatedUser = userService.updateProfile(userId, request)
         
         val token = jwtUtil.generateToken(
@@ -50,9 +47,12 @@ class UserController(
             roles = listOf(updatedUser.role.name)
         )
         
+        val refreshToken = authService.createAndSaveRefreshToken(updatedUser.id!!, updatedUser.email)
+        
         return ResponseEntity.ok(
             LoginResponseDto(
                 token = token,
+                refreshToken = refreshToken,
                 user = updatedUser
             )
         )
@@ -63,10 +63,7 @@ class UserController(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
         @RequestParam("file") file: MultipartFile
     ): ResponseEntity<UserDto> {
-        val userId = userDetails.getUserId() ?: throw APIException(
-            ErrorCode.INTERNAL_SERVER_ERROR,
-            "User ID not found in principal"
-        )
+        val userId = userDetails.getUserId()
         val updatedUser = userService.updateProfilePicture(userId, file)
         return ResponseEntity.ok(updatedUser)
     }
