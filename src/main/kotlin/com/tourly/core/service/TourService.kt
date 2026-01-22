@@ -11,15 +11,17 @@ import com.tourly.core.exception.ErrorCode
 import com.tourly.core.mapper.TourMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 
 @Service
 class TourService(
     private val tourRepository: TourRepository,
     private val userRepository: UserRepository,
+    private val cloudinaryService: CloudinaryService
 ) {
 
     @Transactional
-    fun createTour(guideEmail: String, request: CreateTourRequestDto): CreateTourResponseDto {
+    fun createTour(guideEmail: String, request: CreateTourRequestDto, image: MultipartFile?): CreateTourResponseDto {
         val guide = userRepository.findByEmail(guideEmail)
             ?: throw APIException(
                 errorCode = ErrorCode.RESOURCE_NOT_FOUND,
@@ -28,6 +30,7 @@ class TourService(
 
         if (guide.role != UserRole.GUIDE) throw APIException(ErrorCode.FORBIDDEN, "User is not a guide")
 
+        // First, create and save the tour without image to get the ID
         val tour = TourEntity(
             guide = guide,
             title = request.title,
@@ -36,11 +39,23 @@ class TourService(
             duration = request.duration,
             maxGroupSize = request.maxGroupSize,
             pricePerPerson = request.pricePerPerson,
-            whatsIncluded = request.whatsIncluded,
-            scheduledDate = request.scheduledDate
+            whatsIncluded = request.whatsIncluded ?: "",
+            scheduledDate = request.scheduledDate,
+            imageUrl = null
         )
 
         val savedTour = tourRepository.save(tour)
+
+        // Now upload the image using the actual tour ID
+        if (image != null) {
+            val imageUrl = cloudinaryService.uploadImage(
+                image, 
+                "tour_images", 
+                "tour_${savedTour.id}"
+            )
+            savedTour.imageUrl = imageUrl
+            tourRepository.save(savedTour)
+        }
 
         return TourMapper.toDto(savedTour)
     }
@@ -64,5 +79,13 @@ class TourService(
     fun getAllActiveTours(): List<CreateTourResponseDto> {
         return tourRepository.findAllByStatusOrderByCreatedAtDesc("ACTIVE")
             .map(TourMapper::toDto)
+    }
+    @Transactional(readOnly = true)
+    fun getTour(id: Long): CreateTourResponseDto {
+        val tour = tourRepository.findById(id)
+            .orElseThrow {
+                APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id")
+            }
+        return TourMapper.toDto(tour)
     }
 }

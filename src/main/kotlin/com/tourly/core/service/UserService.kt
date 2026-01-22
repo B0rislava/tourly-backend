@@ -51,7 +51,7 @@ class UserService(
 
     @Transactional
     fun updateProfilePicture(userId: Long, file: MultipartFile): UserDto {
-        val imageUrl = cloudinaryService.uploadImage(file, userId)
+        val imageUrl = cloudinaryService.uploadImage(file, "avatars", "user_$userId")
 
         val user = findUser(userId)
         user.profilePictureUrl = imageUrl

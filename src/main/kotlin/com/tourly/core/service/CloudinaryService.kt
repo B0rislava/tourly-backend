@@ -4,13 +4,18 @@ import com.cloudinary.Cloudinary
 import com.cloudinary.utils.ObjectUtils
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+import javax.imageio.IIOImage
 
 @Service
 class CloudinaryService(
     private val cloudinary: Cloudinary
 ) {
 
-    fun uploadImage(file: MultipartFile, userId: Long): String {
+    companion object {
+        private const val BASE_FOLDER = "Tourly"
+    }
+
+    fun uploadImage(file: MultipartFile, folder: String, publicId: String): String {
         val imageBytes = if (file.size > 2 * 1024 * 1024) {
             compressImage(file)
         } else {
@@ -24,8 +29,8 @@ class CloudinaryService(
         try {
             uploadResult = cloudinary.uploader().upload(
                 imageBytes, ObjectUtils.asMap(
-                    "folder", "avatars",
-                    "public_id", "user_${userId}",
+                    "folder", "$BASE_FOLDER/$folder",
+                    "public_id", publicId,
                     "overwrite", true,
                     "resource_type", "image"
                 )
@@ -71,7 +76,7 @@ class CloudinaryService(
                 param.compressionQuality = 0.8f // 80% quality
             }
             
-            writer.write(null, javax.imageio.IIOImage(resizedImage, null, null), param)
+            writer.write(null, IIOImage(resizedImage, null, null), param)
             
             writer.dispose()
             ios.close()
