@@ -34,5 +34,14 @@ data class UserEntity(
     val role: UserRole,
 
     @Column(name = "profile_picture_url")
-    var profilePictureUrl: String?
+    var profilePictureUrl: String?,
+
+    @Column(name = "bio", length = 1000)
+    var bio: String? = null,
+
+    @Column(name = "rating")
+    var rating: Double = 0.0,
+
+    @Column(name = "tours_completed")
+    var toursCompleted: Int = 0
 )

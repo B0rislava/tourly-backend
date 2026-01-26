@@ -11,21 +11,27 @@ spring:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       minimum-idle: 2
       idle-timeout: 30000
-      max-lifetime: 1800000
+      max-lifetime: 600000
       connection-timeout: 30000
   # JPA Configuration
   jpa:
     database: POSTGRESQL
     show-sql: true
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         jdbc:
           lob:
             non_contextual_creation: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      file-size-threshold: 2KB
 
 jwt:
   secret: ${JWT_SECRET}
@@ -41,6 +47,8 @@ server:
   # servlet:
   #   context-path: /core/${API_VERSION:v1}  # Commented out for simpler development
   port: ${APP_PORT:8080}
+  tomcat:
+    max-http-form-post-size: 10MB
 
 cloudinary:
   cloud_name: ${CLOUDINARY_NAME}

@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
 import java.time.LocalDate
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class CreateTourRequestDto(
     @field:NotBlank(message = "Title is required")
     val title: String,
@@ -33,5 +36,7 @@ data class CreateTourRequestDto(
     val whatsIncluded: String?,
     
     @field:FutureOrPresent(message = "Scheduled date must be in the present or future")
-    val scheduledDate: LocalDate?
+    val scheduledDate: LocalDate?,
+
+    val tagIds: List<Long>? = null
 )

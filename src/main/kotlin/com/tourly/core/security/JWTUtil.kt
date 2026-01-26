@@ -76,6 +76,7 @@ class JWTUtil {
             .setSubject(subject)
             .setIssuedAt(now)
             .setExpiration(expiryDate)
+            .setId(UUID.randomUUID().toString()) // Ensure uniqueness
             .signWith(secretKey, SignatureAlgorithm.HS256)
             .compact()
     }
