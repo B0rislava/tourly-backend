@@ -54,6 +54,7 @@ class TourService(
             location = request.location,
             duration = request.duration,
             maxGroupSize = request.maxGroupSize,
+            availableSpots = request.maxGroupSize,
             pricePerPerson = request.pricePerPerson,
             whatsIncluded = request.whatsIncluded ?: "",
             scheduledDate = request.scheduledDate,
