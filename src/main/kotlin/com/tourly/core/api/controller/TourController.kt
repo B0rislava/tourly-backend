@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/tours")
@@ -41,8 +43,30 @@ class TourController(
     }
 
     @GetMapping
-    fun getAllTours(): ResponseEntity<List<CreateTourResponseDto>> {
-        val tours = tourService.getAllActiveTours()
+    fun getAllTours(
+        @RequestParam(required = false) location: String?,
+        @RequestParam(required = false) tags: List<String>?,
+        @RequestParam(required = false) minPrice: Double?,
+        @RequestParam(required = false) maxPrice: Double?,
+        @RequestParam(required = false) minRating: Double?,
+        @RequestParam(required = false) scheduledAfter: LocalDate?,
+        @RequestParam(required = false) scheduledBefore: LocalDate?,
+        @RequestParam(required = false) maxGroupSize: Int?,
+        @RequestParam(required = false) sortBy: String?,
+        @RequestParam(required = false) sortOrder: String?
+    ): ResponseEntity<List<CreateTourResponseDto>> {
+        val tours = tourService.getAllActiveTours(
+            location = location,
+            tags = tags,
+            minPrice = minPrice,
+            maxPrice = maxPrice,
+            minRating = minRating,
+            scheduledAfter = scheduledAfter,
+            scheduledBefore = scheduledBefore,
+            maxGroupSize = maxGroupSize,
+            sortBy = sortBy,
+            sortOrder = sortOrder
+        )
         return ResponseEntity.ok(tours)
     }
 
