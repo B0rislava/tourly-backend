@@ -41,6 +41,9 @@ data class TourEntity(
     @Column(name = "max_group_size", nullable = false)
     val maxGroupSize: Int,
 
+    @Column(name = "available_spots", nullable = false, columnDefinition = "integer default 0")
+    var availableSpots: Int = maxGroupSize,
+
     @Column(name = "price_per_person", nullable = false)
     val pricePerPerson: Double,
 

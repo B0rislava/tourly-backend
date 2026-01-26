@@ -15,6 +15,7 @@ object TourMapper {
             location = tour.location,
             duration = tour.duration,
             maxGroupSize = tour.maxGroupSize,
+            availableSpots = tour.availableSpots,
             pricePerPerson = tour.pricePerPerson,
             scheduledDate = tour.scheduledDate?.toString(),
             createdAt = tour.createdAt.format(DateTimeFormatter.ISO_DATE_TIME),
