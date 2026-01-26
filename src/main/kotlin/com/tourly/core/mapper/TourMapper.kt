@@ -30,6 +30,8 @@ object TourMapper {
             guideRating = tour.guide.rating,
             guideToursCompleted = tour.guide.toursCompleted,
             guideImageUrl = tour.guide.profilePictureUrl,
+            latitude = tour.latitude,
+            longitude = tour.longitude,
             tags = tour.tags.map { TagMapper.toDto(it) }
         )
 

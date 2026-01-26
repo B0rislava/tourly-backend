@@ -58,6 +58,9 @@ class TourService(
             pricePerPerson = request.pricePerPerson,
             whatsIncluded = request.whatsIncluded ?: "",
             scheduledDate = request.scheduledDate,
+            latitude = request.latitude,
+            longitude = request.longitude,
+            meetingPoint = request.meetingPoint,
             imageUrl = null,
             tags = tags
         )
