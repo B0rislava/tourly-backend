@@ -28,7 +28,8 @@ object TourMapper {
             guideBio = tour.guide.bio,
             guideRating = tour.guide.rating,
             guideToursCompleted = tour.guide.toursCompleted,
-            guideImageUrl = tour.guide.profilePictureUrl
+            guideImageUrl = tour.guide.profilePictureUrl,
+            tags = tour.tags.map { TagMapper.toDto(it) }
         )
 
 }
