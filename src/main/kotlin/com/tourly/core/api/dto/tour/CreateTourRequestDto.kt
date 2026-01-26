@@ -38,5 +38,9 @@ data class CreateTourRequestDto(
     @field:FutureOrPresent(message = "Scheduled date must be in the present or future")
     val scheduledDate: LocalDate?,
 
-    val tagIds: List<Long>? = null
+    val tagIds: List<Long>? = null,
+
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val meetingPoint: String? = null
 )

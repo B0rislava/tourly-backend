@@ -74,6 +74,12 @@ data class TourEntity(
     @Column(name = "cancellation_policy", length = 1000)
     val cancellationPolicy: String? = null,
 
+    @Column(name = "latitude")
+    val latitude: Double? = null,
+
+    @Column(name = "longitude")
+    val longitude: Double? = null,
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "tour_tags",
