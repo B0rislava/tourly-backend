@@ -57,11 +57,14 @@ object TourMapper {
         )
 
     fun updateEntity(tour: TourEntity, request: CreateTourRequestDto, tags: Set<TagEntity>) {
+        val occupiedSpots = tour.maxGroupSize - tour.availableSpots
+        
         tour.title = request.title
         tour.description = request.description
         tour.location = request.location
         tour.duration = request.duration
         tour.maxGroupSize = request.maxGroupSize
+        tour.availableSpots = request.maxGroupSize - occupiedSpots
         tour.pricePerPerson = request.pricePerPerson
         tour.whatsIncluded = request.whatsIncluded ?: ""
         tour.scheduledDate = request.scheduledDate

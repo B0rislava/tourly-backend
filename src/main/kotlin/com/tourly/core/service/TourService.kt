@@ -134,6 +134,14 @@ class TourService(
         // Fetch tags if provided
         val tags = fetchTags(request.tagIds)
 
+        val occupiedSpots = tour.maxGroupSize - tour.availableSpots
+        if (request.maxGroupSize < occupiedSpots) {
+            throw APIException(
+                ErrorCode.BAD_REQUEST,
+                "Maximum group size cannot be less than the number of current bookings ($occupiedSpots)"
+            )
+        }
+
         TourMapper.updateEntity(tour, request, tags)
 
         if (image != null) {
