@@ -14,4 +14,6 @@ interface TourRepository : JpaRepository<TourEntity, Long>, JpaSpecificationExec
     override fun findAll(spec: Specification<TourEntity>, sort: Sort): List<TourEntity>
 
     fun findAllByGuideIdOrderByCreatedAtDesc(guideId: Long): List<TourEntity>
+
+    fun deleteAllByGuideId(guideId: Long)
 }

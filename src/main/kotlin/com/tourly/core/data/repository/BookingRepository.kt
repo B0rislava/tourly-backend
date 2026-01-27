@@ -15,4 +15,8 @@ interface BookingRepository : JpaRepository<BookingEntity, Long> {
     fun existsByUserIdAndTourId(userId: Long, tourId: Long): Boolean
 
     fun existsByTourIdAndStatus(tourId: Long, status: String): Boolean
+
+    fun deleteAllByUserId(userId: Long)
+    
+    fun deleteAllByTourGuideId(guideId: Long)
 }

@@ -74,6 +74,14 @@ class AuthService(
     }
 
     fun login(request: LoginRequestDto): LoginResponseDto {
+        // 1. Check if user exists first to provide better feedback
+        val user = userRepository.findByEmail(request.email)
+            ?: throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "The account you entered does not exist"
+            )
+
+        // 2. Attempt authentication
         try {
             authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken(
@@ -84,18 +92,11 @@ class AuthService(
         } catch (e: BadCredentialsException) {
             throw APIException(
                 errorCode = ErrorCode.UNAUTHORIZED,
-                description = "Invalid email or password"
+                description = "Invalid password"
             )
         } catch (e: Exception) {
             throw e
         }
-
-        // Load user details from database
-        val user = userRepository.findByEmail(request.email)
-            ?: throw APIException(
-                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
-                description = "User not found with email: ${request.email}"
-            )
 
         // Generate JWT token with username and roles
         val token = jwtUtil.generateToken(
