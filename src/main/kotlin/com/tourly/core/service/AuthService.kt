@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.entity.RefreshTokenEntity
 import com.tourly.core.data.repository.RefreshTokenRepository
-import com.tourly.core.api.dto.UserDto
 import com.tourly.core.api.dto.auth.LoginRequestDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
 import com.tourly.core.api.dto.auth.RegisterRequestDto
@@ -18,7 +17,9 @@ import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
+import com.tourly.core.mapper.UserMapper
 import com.tourly.core.security.JWTUtil
+import org.springframework.security.authentication.BadCredentialsException
 
 @Service
 class AuthService(
@@ -68,14 +69,7 @@ class AuthService(
         return RegisterResponseDto(
             token = accessToken,
             refreshToken = refreshToken,
-            user = UserDto(
-                id = user.id,
-                email = user.email,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                role = user.role,
-                profilePictureUrl = user.profilePictureUrl
-            )
+            user = UserMapper.toDto(user)
         )
     }
 
@@ -87,11 +81,13 @@ class AuthService(
                     request.password
                 )
             )
-        } catch (_: Exception) {
+        } catch (e: BadCredentialsException) {
             throw APIException(
                 errorCode = ErrorCode.UNAUTHORIZED,
                 description = "Invalid email or password"
             )
+        } catch (e: Exception) {
+            throw e
         }
 
         // Load user details from database
@@ -112,14 +108,7 @@ class AuthService(
         return LoginResponseDto(
             token = token,
             refreshToken = refreshToken,
-            user = UserDto(
-                id = user.id,
-                email = user.email,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                role = user.role,
-                profilePictureUrl = user.profilePictureUrl
-            )
+            user = UserMapper.toDto(user)
         )
     }
 

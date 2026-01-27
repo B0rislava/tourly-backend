@@ -41,6 +41,8 @@ class UserService(
         
         user.firstName = request.firstName
         user.lastName = request.lastName
+        user.bio = request.bio
+        user.certifications = request.certifications
 
         if (!request.password.isNullOrBlank()) {
             user.password = passwordEncoder.encode(request.password).toString()
