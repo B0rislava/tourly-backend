@@ -35,7 +35,7 @@ class BookingService(
         }
 
         // Check for double booking
-        if (bookingRepository.existsByUserIdAndTourId(user.id!!, request.tourId)) {
+        if (bookingRepository.existsByUserIdAndTourIdAndStatus(user.id!!, request.tourId, "CONFIRMED")) {
             throw APIException(ErrorCode.CONFLICT, "You've already booked this tour")
         }
 
