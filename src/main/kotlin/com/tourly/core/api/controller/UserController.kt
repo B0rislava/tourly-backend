@@ -10,6 +10,7 @@ import com.tourly.core.security.JWTUtil
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -66,5 +67,11 @@ class UserController(
         val userId = userDetails.getUserId()
         val updatedUser = userService.updateProfilePicture(userId, file)
         return ResponseEntity.ok(updatedUser)
+    }
+
+    @DeleteMapping("/me")
+    fun deleteProfile(@AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<Unit> {
+        userService.deleteUser(userDetails.getUserId())
+        return ResponseEntity.noContent().build()
     }
 }

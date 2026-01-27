@@ -40,8 +40,17 @@ data class UserEntity(
     var bio: String? = null,
 
     @Column(name = "rating")
-    var rating: Double = 0.0,
+    var rating: Double? = 0.0,
+
+    @Column(name = "reviews_count")
+    var reviewsCount: Int? = 0,
+
+    @Column(name = "follower_count")
+    var followerCount: Int? = 0,
+
+    @Column(name = "certifications", length = 1000)
+    var certifications: String? = null,
 
     @Column(name = "tours_completed")
-    var toursCompleted: Int = 0
+    var toursCompleted: Int? = 0
 )

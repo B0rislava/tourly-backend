@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -73,5 +74,29 @@ class TourController(
     @GetMapping("/{id}")
     fun getTour(@PathVariable id: Long): ResponseEntity<CreateTourResponseDto> {
         return ResponseEntity.ok(tourService.getTour(id))
+    }
+
+    @PostMapping(value = ["/{id}"], consumes = ["multipart/form-data"])
+    @PreAuthorize("hasRole('GUIDE')")
+    fun updateTour(
+        authentication: Authentication,
+        @PathVariable id: Long,
+        @Valid @RequestPart("data") request: CreateTourRequestDto,
+        @RequestPart("image", required = false) image: MultipartFile?
+    ): ResponseEntity<CreateTourResponseDto> {
+        val email = authentication.name
+        val response = tourService.updateTour(id, email, request, image)
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GUIDE')")
+    fun deleteTour(
+        authentication: Authentication,
+        @PathVariable id: Long
+    ): ResponseEntity<Unit> {
+        val email = authentication.name
+        tourService.deleteTour(id, email)
+        return ResponseEntity.noContent().build()
     }
 }

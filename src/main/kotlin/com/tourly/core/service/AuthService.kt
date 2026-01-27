@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.entity.RefreshTokenEntity
 import com.tourly.core.data.repository.RefreshTokenRepository
-import com.tourly.core.api.dto.UserDto
 import com.tourly.core.api.dto.auth.LoginRequestDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
 import com.tourly.core.api.dto.auth.RegisterRequestDto
@@ -18,7 +17,9 @@ import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
+import com.tourly.core.mapper.UserMapper
 import com.tourly.core.security.JWTUtil
+import org.springframework.security.authentication.BadCredentialsException
 
 @Service
 class AuthService(
@@ -68,18 +69,19 @@ class AuthService(
         return RegisterResponseDto(
             token = accessToken,
             refreshToken = refreshToken,
-            user = UserDto(
-                id = user.id,
-                email = user.email,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                role = user.role,
-                profilePictureUrl = user.profilePictureUrl
-            )
+            user = UserMapper.toDto(user)
         )
     }
 
     fun login(request: LoginRequestDto): LoginResponseDto {
+        // 1. Check if user exists first to provide better feedback
+        val user = userRepository.findByEmail(request.email)
+            ?: throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "The account you entered does not exist"
+            )
+
+        // 2. Attempt authentication
         try {
             authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken(
@@ -87,19 +89,14 @@ class AuthService(
                     request.password
                 )
             )
-        } catch (_: Exception) {
+        } catch (e: BadCredentialsException) {
             throw APIException(
                 errorCode = ErrorCode.UNAUTHORIZED,
-                description = "Invalid email or password"
+                description = "Invalid password"
             )
+        } catch (e: Exception) {
+            throw e
         }
-
-        // Load user details from database
-        val user = userRepository.findByEmail(request.email)
-            ?: throw APIException(
-                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
-                description = "User not found with email: ${request.email}"
-            )
 
         // Generate JWT token with username and roles
         val token = jwtUtil.generateToken(
@@ -112,14 +109,7 @@ class AuthService(
         return LoginResponseDto(
             token = token,
             refreshToken = refreshToken,
-            user = UserDto(
-                id = user.id,
-                email = user.email,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                role = user.role,
-                profilePictureUrl = user.profilePictureUrl
-            )
+            user = UserMapper.toDto(user)
         )
     }
 

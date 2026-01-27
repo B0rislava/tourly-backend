@@ -1,7 +1,10 @@
 package com.tourly.core.mapper
 
+import com.tourly.core.api.dto.tour.CreateTourRequestDto
 import com.tourly.core.api.dto.tour.CreateTourResponseDto
+import com.tourly.core.data.entity.TagEntity
 import com.tourly.core.data.entity.TourEntity
+import com.tourly.core.data.entity.UserEntity
 import java.time.format.DateTimeFormatter
 
 object TourMapper {
@@ -20,19 +23,55 @@ object TourMapper {
             scheduledDate = tour.scheduledDate?.toString(),
             createdAt = tour.createdAt.format(DateTimeFormatter.ISO_DATE_TIME),
             status = tour.status,
-            rating = tour.rating,
-            reviewsCount = tour.reviewsCount,
+            rating = tour.rating ?: 0.0,
+            reviewsCount = tour.reviewsCount ?: 0,
             meetingPoint = tour.meetingPoint,
             imageUrl = tour.imageUrl,
             cancellationPolicy = tour.cancellationPolicy,
             whatsIncluded = tour.whatsIncluded,
             guideBio = tour.guide.bio,
-            guideRating = tour.guide.rating,
-            guideToursCompleted = tour.guide.toursCompleted,
+            guideRating = tour.guide.rating ?: 0.0,
+            guideToursCompleted = tour.guide.toursCompleted ?: 0,
             guideImageUrl = tour.guide.profilePictureUrl,
             latitude = tour.latitude,
             longitude = tour.longitude,
             tags = tour.tags.map { TagMapper.toDto(it) }
         )
+    fun toEntity(guide: UserEntity, request: CreateTourRequestDto, tags: Set<TagEntity>): TourEntity =
+        TourEntity(
+            guide = guide,
+            title = request.title,
+            description = request.description,
+            location = request.location,
+            duration = request.duration,
+            maxGroupSize = request.maxGroupSize,
+            availableSpots = request.maxGroupSize,
+            pricePerPerson = request.pricePerPerson,
+            whatsIncluded = request.whatsIncluded ?: "",
+            scheduledDate = request.scheduledDate,
+            latitude = request.latitude,
+            longitude = request.longitude,
+            meetingPoint = request.meetingPoint,
+            imageUrl = null,
+            tags = tags.toMutableSet()
+        )
+
+    fun updateEntity(tour: TourEntity, request: CreateTourRequestDto, tags: Set<TagEntity>) {
+        val occupiedSpots = tour.maxGroupSize - tour.availableSpots
+        
+        tour.title = request.title
+        tour.description = request.description
+        tour.location = request.location
+        tour.duration = request.duration
+        tour.maxGroupSize = request.maxGroupSize
+        tour.availableSpots = request.maxGroupSize - occupiedSpots
+        tour.pricePerPerson = request.pricePerPerson
+        tour.whatsIncluded = request.whatsIncluded ?: ""
+        tour.scheduledDate = request.scheduledDate
+        tour.latitude = request.latitude
+        tour.longitude = request.longitude
+        tour.meetingPoint = request.meetingPoint
+        tour.tags = tags.toMutableSet()
+    }
 
 }
