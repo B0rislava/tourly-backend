@@ -2,11 +2,12 @@ package com.tourly.core.service
 
 import com.tourly.core.api.dto.tour.CreateTourRequestDto
 import com.tourly.core.api.dto.tour.CreateTourResponseDto
-import com.tourly.core.data.entity.TourEntity
+import com.tourly.core.data.entity.TagEntity
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.data.repository.TagRepository
 import com.tourly.core.data.repository.TourRepository
 import com.tourly.core.data.repository.UserRepository
+import com.tourly.core.data.repository.BookingRepository
 import com.tourly.core.data.specification.TourSpecification
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
@@ -22,7 +23,8 @@ class TourService(
     private val tourRepository: TourRepository,
     private val userRepository: UserRepository,
     private val cloudinaryService: CloudinaryService,
-    private val tagRepository: TagRepository
+    private val tagRepository: TagRepository,
+    private val bookingRepository: BookingRepository
 ) {
 
     @Transactional
@@ -36,34 +38,10 @@ class TourService(
         if (guide.role != UserRole.GUIDE) throw APIException(ErrorCode.FORBIDDEN, "User is not a guide")
 
         // Fetch tags if provided
-        val tags = if (!request.tagIds.isNullOrEmpty()) {
-            val foundTags = tagRepository.findAllById(request.tagIds)
-            if (foundTags.size != request.tagIds.size) {
-                throw APIException(ErrorCode.BAD_REQUEST, "One or more tag IDs are invalid")
-            }
-            foundTags.toMutableSet()
-        } else {
-            mutableSetOf()
-        }
+        val tags = fetchTags(request.tagIds)
 
         // First, create and save the tour without image to get the ID
-        val tour = TourEntity(
-            guide = guide,
-            title = request.title,
-            description = request.description,
-            location = request.location,
-            duration = request.duration,
-            maxGroupSize = request.maxGroupSize,
-            availableSpots = request.maxGroupSize,
-            pricePerPerson = request.pricePerPerson,
-            whatsIncluded = request.whatsIncluded ?: "",
-            scheduledDate = request.scheduledDate,
-            latitude = request.latitude,
-            longitude = request.longitude,
-            meetingPoint = request.meetingPoint,
-            imageUrl = null,
-            tags = tags
-        )
+        val tour = TourMapper.toEntity(guide, request, tags)
 
         val savedTour = tourRepository.save(tour)
 
@@ -93,6 +71,7 @@ class TourService(
             ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Guide ID is null after DB fetch")
 
         return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
+            .filter { it.status != "DELETED" }
             .map(TourMapper::toDto)
     }
 
@@ -143,12 +122,68 @@ class TourService(
         return Sort.by(direction, field)
     }
 
+    @Transactional
+    fun updateTour(id: Long, guideEmail: String, request: CreateTourRequestDto, image: MultipartFile?): CreateTourResponseDto {
+        val tour = tourRepository.findById(id)
+            .orElseThrow { APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id") }
+
+        if (tour.guide.email != guideEmail) {
+            throw APIException(ErrorCode.FORBIDDEN, "You are not authorized to update this tour")
+        }
+
+        // Fetch tags if provided
+        val tags = fetchTags(request.tagIds)
+
+        TourMapper.updateEntity(tour, request, tags)
+
+        if (image != null) {
+            val imageUrl = cloudinaryService.uploadImage(
+                image,
+                "tour_images",
+                "tour_${tour.id}"
+            )
+            tour.imageUrl = imageUrl
+        }
+
+        val updatedTour = tourRepository.save(tour)
+        return TourMapper.toDto(updatedTour)
+    }
+
+    @Transactional
+    fun deleteTour(id: Long, guideEmail: String) {
+        val tour = tourRepository.findById(id)
+            .orElseThrow { APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id") }
+
+        if (tour.guide.email != guideEmail) {
+            throw APIException(ErrorCode.FORBIDDEN, "You are not authorized to delete this tour")
+        }
+
+        // Check for active bookings
+        if (bookingRepository.existsByTourIdAndStatus(tour.id, "CONFIRMED")) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Cannot delete tour with active bookings.")
+        }
+
+        tour.status = "DELETED"
+        tourRepository.save(tour)
+    }
+
     @Transactional(readOnly = true)
     fun getTour(id: Long): CreateTourResponseDto {
         val tour = tourRepository.findById(id)
+            .filter { it.status != "DELETED" }
             .orElseThrow {
                 APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id")
             }
         return TourMapper.toDto(tour)
+    }
+
+    private fun fetchTags(tagIds: List<Long>?): MutableSet<TagEntity> {
+        if (tagIds.isNullOrEmpty()) return mutableSetOf()
+
+        val foundTags = tagRepository.findAllById(tagIds)
+        if (foundTags.size != tagIds.size) {
+            throw APIException(ErrorCode.BAD_REQUEST, "One or more tag IDs are invalid")
+        }
+        return foundTags.toMutableSet()
     }
 }

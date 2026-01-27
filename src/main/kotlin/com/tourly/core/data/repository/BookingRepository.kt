@@ -13,4 +13,6 @@ interface BookingRepository : JpaRepository<BookingEntity, Long> {
     fun findAllByTourIdAndStatus(tourId: Long, status: String): List<BookingEntity>
     
     fun existsByUserIdAndTourId(userId: Long, tourId: Long): Boolean
+
+    fun existsByTourIdAndStatus(tourId: Long, status: String): Boolean
 }
