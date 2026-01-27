@@ -24,7 +24,8 @@ class TourService(
     private val userRepository: UserRepository,
     private val cloudinaryService: CloudinaryService,
     private val tagRepository: TagRepository,
-    private val bookingRepository: BookingRepository
+    private val bookingRepository: BookingRepository,
+    private val notificationService: NotificationService
 ) {
 
     @Transactional
@@ -166,10 +167,19 @@ class TourService(
             throw APIException(ErrorCode.FORBIDDEN, "You are not authorized to delete this tour")
         }
 
-        // Check for active bookings
-        if (bookingRepository.existsByTourIdAndStatus(tour.id, "CONFIRMED")) {
-            throw APIException(ErrorCode.BAD_REQUEST, "Cannot delete tour with active bookings.")
+        // Find all bookings to cancel and notify
+        val bookings = bookingRepository.findAllByTourIdAndStatus(tour.id, "CONFIRMED")
+        bookings.forEach { booking ->
+            booking.status = "CANCELLED"
+            notificationService.createNotification(
+                user = booking.user,
+                title = "Tour Cancelled",
+                message = "The tour '${tour.title}' has been cancelled by the guide.",
+                type = "TOUR_CANCELLED",
+                relatedId = tour.id
+            )
         }
+        bookingRepository.saveAll(bookings)
 
         tour.status = "DELETED"
         tourRepository.save(tour)

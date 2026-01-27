@@ -17,7 +17,8 @@ import java.time.format.DateTimeFormatter
 class BookingService(
     private val bookingRepository: BookingRepository,
     private val tourRepository: TourRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val notificationService: NotificationService
 ) {
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -34,7 +35,7 @@ class BookingService(
         }
 
         // Check for double booking
-        if (bookingRepository.existsByUserIdAndTourId(user.id!!, request.tourId)) {
+        if (bookingRepository.existsByUserIdAndTourIdAndStatus(user.id!!, request.tourId, "CONFIRMED")) {
             throw APIException(ErrorCode.CONFLICT, "You've already booked this tour")
         }
 
@@ -73,6 +74,15 @@ class BookingService(
 
         val savedBooking = bookingRepository.save(booking)
 
+        // Notify the guide
+        notificationService.createNotification(
+            user = tour.guide,
+            title = "New Booking",
+            message = "Someone has booked ${request.numberOfParticipants} spot(s) for your tour '${tour.title}'.",
+            type = "NEW_BOOKING",
+            relatedId = tour.id
+        )
+
         return mapToResponseDto(savedBooking)
     }
 
@@ -81,7 +91,9 @@ class BookingService(
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
 
         val bookings = bookingRepository.findAllByUserIdOrderByBookingDateDesc(user.id!!)
-        return bookings.map { mapToResponseDto(it) }
+        return bookings
+            .filter { it.tour.status != "DELETED" }
+            .map { mapToResponseDto(it) }
     }
 
     @Transactional
@@ -109,6 +121,24 @@ class BookingService(
         // Update booking status
         booking.status = "CANCELLED"
         bookingRepository.save(booking)
+
+        // Notify the user (traveler)
+        notificationService.createNotification(
+            user = booking.user,
+            title = "Booking Cancelled",
+            message = "Your booking for '${tour.title}' has been cancelled.",
+            type = "BOOKING_CANCELLED",
+            relatedId = tour.id
+        )
+
+        // Notify the guide
+        notificationService.createNotification(
+            user = tour.guide,
+            title = "Booking Cancelled",
+            message = "A traveler has cancelled their booking for your tour '${tour.title}'.",
+            type = "BOOKING_CANCELLED",
+            relatedId = tour.id
+        )
     }
 
     private fun mapToResponseDto(booking: BookingEntity): BookingResponseDto {

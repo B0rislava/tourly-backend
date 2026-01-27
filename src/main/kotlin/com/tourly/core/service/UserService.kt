@@ -89,6 +89,14 @@ class UserService(
         userRepository.delete(user)
     }
 
+    @Transactional(readOnly = true)
+    fun getUserByEmail(email: String) =
+        userRepository.findByEmail(email)
+            ?: throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "User not found with email: $email"
+            )
+
     private fun findUser(userId: Long) =
         userRepository.findByIdOrNull(userId)
             ?: throw APIException(
