@@ -14,6 +14,12 @@ object UserMapper {
             firstName = user.firstName,
             lastName = user.lastName,
             role = user.role,
-            profilePictureUrl = user.profilePictureUrl
+            profilePictureUrl = user.profilePictureUrl,
+            bio = user.bio,
+            rating = user.rating ?: 0.0,
+            reviewsCount = user.reviewsCount ?: 0,
+            followerCount = user.followerCount ?: 0,
+            certifications = user.certifications,
+            toursCompleted = user.toursCompleted ?: 0
         )
 }
