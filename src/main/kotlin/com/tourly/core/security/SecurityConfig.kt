@@ -20,7 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 class SecurityConfig(
     private val customUserDetailsService: CustomUserDetailsService,
-    private val jwtAuthFilter: JWTAuthFilter
+    private val jwtAuthFilter: JWTAuthFilter,
+    private val entryPoint: JWTAuthenticationEntryPoint
 ) {
 
     @Bean
@@ -43,6 +44,7 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .exceptionHandling { it.authenticationEntryPoint(entryPoint) }
             .authorizeHttpRequests { auth ->
                 auth
                     // Public endpoints
