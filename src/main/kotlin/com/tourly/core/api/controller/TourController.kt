@@ -17,12 +17,19 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDate
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "Tours", description = "Endpoints for managing tours")
 @RestController
 @RequestMapping("/api/tours")
 class TourController(
     private val tourService: TourService
 ) {
+    @Operation(
+        summary = "Create a new tour",
+        description = "Allows a guide to create a new tour with an optional image"
+    )
     @PostMapping(consumes = ["multipart/form-data"])
     @PreAuthorize("hasRole('GUIDE')")
     fun createTour(
@@ -35,6 +42,7 @@ class TourController(
         return ResponseEntity.ok(response)
     }
 
+    @Operation(summary = "Get my tours", description = "Fetches all tours created by the currently authenticated guide")
     @GetMapping("/my")
     @PreAuthorize("hasRole('GUIDE')")
     fun getMyTours(authentication: Authentication): ResponseEntity<List<CreateTourResponseDto>> {
@@ -43,6 +51,7 @@ class TourController(
         return ResponseEntity.ok(tours)
     }
 
+    @Operation(summary = "Search tours", description = "Fetches all active tours based on various filter criteria")
     @GetMapping
     fun getAllTours(
         @RequestParam(required = false) location: String?,
@@ -71,11 +80,13 @@ class TourController(
         return ResponseEntity.ok(tours)
     }
 
+    @Operation(summary = "Get tour by ID", description = "Fetches details of a specific tour")
     @GetMapping("/{id}")
     fun getTour(@PathVariable id: Long): ResponseEntity<CreateTourResponseDto> {
         return ResponseEntity.ok(tourService.getTour(id))
     }
 
+    @Operation(summary = "Update tour", description = "Allows a guide to update an existing tour")
     @PostMapping(value = ["/{id}"], consumes = ["multipart/form-data"])
     @PreAuthorize("hasRole('GUIDE')")
     fun updateTour(
@@ -89,6 +100,7 @@ class TourController(
         return ResponseEntity.ok(response)
     }
 
+    @Operation(summary = "Delete tour", description = "Allows a guide to delete one of their tours")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('GUIDE')")
     fun deleteTour(

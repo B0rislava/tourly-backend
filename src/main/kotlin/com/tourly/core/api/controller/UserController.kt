@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "Users", description = "Endpoints for user profile management")
 @RestController
 @RequestMapping("/api/users")
 class UserController(
@@ -28,6 +31,7 @@ class UserController(
     private val authService: AuthService
 ) {
 
+    @Operation(summary = "Get current profile", description = "Fetches the profile details of the currently authenticated user")
     @GetMapping("/me")
     fun me(@AuthenticationPrincipal principal: CustomUserDetails): ResponseEntity<UserDto> {
         return ResponseEntity.ok(
@@ -35,6 +39,7 @@ class UserController(
         )
     }
 
+    @Operation(summary = "Update profile", description = "Updates the profile details of the currently authenticated user")
     @PutMapping("/me")
     fun updateProfile(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
@@ -59,6 +64,7 @@ class UserController(
         )
     }
 
+    @Operation(summary = "Upload profile picture", description = "Updates the profile picture of the currently authenticated user")
     @PostMapping("/me/picture", consumes = ["multipart/form-data"])
     fun uploadProfilePicture(
         @AuthenticationPrincipal userDetails: CustomUserDetails,
@@ -69,6 +75,7 @@ class UserController(
         return ResponseEntity.ok(updatedUser)
     }
 
+    @Operation(summary = "Delete profile", description = "Deletes the currently authenticated user's account")
     @DeleteMapping("/me")
     fun deleteProfile(@AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<Unit> {
         userService.deleteUser(userDetails.getUserId())

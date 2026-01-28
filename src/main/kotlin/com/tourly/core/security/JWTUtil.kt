@@ -6,7 +6,8 @@ import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import javax.crypto.SecretKey
 
 @Component
