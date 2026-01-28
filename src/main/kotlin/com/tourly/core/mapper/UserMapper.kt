@@ -20,6 +20,7 @@ object UserMapper {
             reviewsCount = user.reviewsCount ?: 0,
             followerCount = user.followerCount ?: 0,
             certifications = user.certifications,
-            toursCompleted = user.toursCompleted ?: 0
+            toursCompleted = user.toursCompleted ?: 0,
+            isVerified = user.isVerified
         )
 }
