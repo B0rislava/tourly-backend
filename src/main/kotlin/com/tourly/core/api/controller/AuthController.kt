@@ -1,21 +1,13 @@
 package com.tourly.core.api.controller
 
-import jakarta.validation.Valid
-import com.tourly.core.api.dto.auth.LoginRequestDto
-import com.tourly.core.api.dto.auth.LoginResponseDto
-import com.tourly.core.api.dto.auth.RegisterRequestDto
-import com.tourly.core.api.dto.auth.RegisterResponseDto
+import com.tourly.core.api.dto.auth.*
 import com.tourly.core.service.AuthService
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import com.tourly.core.api.dto.auth.RefreshTokenRequestDto
-import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
 
 
 @Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
@@ -43,6 +35,16 @@ class AuthController(
     @PostMapping("/refresh")
     fun refresh(@Valid @RequestBody request: RefreshTokenRequestDto): ResponseEntity<RefreshTokenResponseDto> {
         val response = authService.refreshAccessToken(request.refreshToken)
+        return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "Verify email code", description = "Verifies a user's email address and returns auth tokens")
+    @PostMapping("/verify-code")
+    fun verifyCode(
+        @RequestParam email: String,
+        @RequestParam code: String
+    ): ResponseEntity<LoginResponseDto> {
+        val response = authService.verifyEmailByCode(email, code)
         return ResponseEntity.ok(response)
     }
 }

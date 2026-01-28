@@ -3,24 +3,17 @@ package com.tourly.core.api.controller
 import com.tourly.core.api.dto.UpdateProfileRequestDto
 import com.tourly.core.api.dto.UserDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
-import com.tourly.core.service.UserService
-import com.tourly.core.service.AuthService
 import com.tourly.core.security.CustomUserDetails
 import com.tourly.core.security.JWTUtil
+import com.tourly.core.service.AuthService
+import com.tourly.core.service.UserService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.tags.Tag
 
 @Tag(name = "Users", description = "Endpoints for user profile management")
 @RestController
@@ -48,7 +41,7 @@ class UserController(
         val userId = userDetails.getUserId()
         val updatedUser = userService.updateProfile(userId, request)
         
-        val token = jwtUtil.generateToken(
+        val token = jwtUtil.generateAccessToken(
             username = updatedUser.email,
             roles = listOf(updatedUser.role.name)
         )
