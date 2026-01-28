@@ -50,6 +50,9 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+
+	// Swagger/OpenAPI
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
 }
 
 kotlin {

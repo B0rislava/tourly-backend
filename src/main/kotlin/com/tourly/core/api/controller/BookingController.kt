@@ -12,12 +12,16 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
+@Tag(name = "Bookings", description = "Endpoints for managing tour bookings")
 @RestController
 @RequestMapping("/api/bookings")
 class BookingController(
     private val bookingService: BookingService
 ) {
+    @Operation(summary = "Book a tour", description = "Allows a traveler to book a specific tour")
     @PostMapping
     @PreAuthorize("hasRole('TRAVELER')")
     fun bookTour(
@@ -29,6 +33,7 @@ class BookingController(
         return ResponseEntity.ok(response)
     }
 
+    @Operation(summary = "Get my bookings", description = "Fetches all bookings made by the currently authenticated user")
     @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
     fun getMyBookings(authentication: Authentication): ResponseEntity<List<BookingResponseDto>> {
@@ -37,6 +42,7 @@ class BookingController(
         return ResponseEntity.ok(bookings)
     }
 
+    @Operation(summary = "Cancel booking", description = "Allows a traveler to cancel one of their existing bookings")
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('TRAVELER')")
     fun cancelBooking(
