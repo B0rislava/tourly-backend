@@ -6,8 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.Date
-import java.util.UUID
+import java.util.*
 import javax.crypto.SecretKey
 
 @Component
@@ -26,8 +25,8 @@ class JWTUtil {
         Keys.hmacShaKeyFor(jwtSecret.toByteArray())
     }
 
-    // Generate JWT token with username and roles
-    fun generateToken(username: String, roles: Collection<String>): String {
+    // Generate JWT access token with username and roles
+    fun generateAccessToken(username: String, roles: Collection<String>): String {
         val claims = mutableMapOf<String, Any>()
         val mappedRoles = roles.map { "ROLE_$it" }
         claims[ROLES_CLAIM] = mappedRoles
