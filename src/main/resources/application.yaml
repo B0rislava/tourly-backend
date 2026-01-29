@@ -35,10 +35,11 @@ spring:
     password: ${MAIL_PASSWORD}
     properties:
       mail:
-        SMTP:
+        smtp:
           auth: true
-          STARTTLS:
+          starttls:
             enable: true
+            required: true
 
   servlet:
     multipart:
