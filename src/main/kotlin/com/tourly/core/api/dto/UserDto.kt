@@ -14,5 +14,6 @@ data class UserDto(
     val reviewsCount: Int = 0,
     val followerCount: Int = 0,
     val certifications: String? = null,
-    val toursCompleted: Int = 0
+    val toursCompleted: Int = 0,
+    val isVerified: Boolean = false
 )
