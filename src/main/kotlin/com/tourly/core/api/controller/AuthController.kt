@@ -47,4 +47,11 @@ class AuthController(
         val response = authService.verifyEmailByCode(email, code)
         return ResponseEntity.ok(response)
     }
+
+    @Operation(summary = "Resend verification code", description = "Generates and sends a new verification code to the user's email")
+    @PostMapping("/resend-code")
+    fun resendCode(@RequestParam email: String): ResponseEntity<Unit> {
+        authService.resendVerificationCode(email)
+        return ResponseEntity.ok().build()
+    }
 }

@@ -206,4 +206,39 @@ class AuthService(
             user = UserMapper.toDto(user)
         )
     }
+
+    @Transactional
+    fun resendVerificationCode(email: String) {
+        val user = userRepository.findByEmail(email)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+
+        // Rate limiting: Check if a code was sent recently (e.g., within the last 60 seconds)
+        val lastToken = verificationTokenRepository.findTopByUserIdOrderByExpiresAtDesc(user.id!!)
+        if (lastToken != null) {
+            val sentAt = lastToken.expiresAt.minusMinutes(15) // We set expiresAt = now + 15m
+            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(60))) {
+                throw APIException(ErrorCode.BAD_REQUEST, "Please wait 60 seconds before requesting a new code.")
+            }
+        }
+
+        // 1. Delete any existing codes for this user
+        verificationTokenRepository.deleteByUserId(user.id!!)
+
+        // 2. Generate new 6-digit code
+        val verificationCode = (100000..999999).random().toString()
+        val verificationTokenEntity = VerificationTokenEntity(
+            token = verificationCode,
+            userId = user.id!!,
+            expiresAt = LocalDateTime.now().plusMinutes(15)
+        )
+        verificationTokenRepository.save(verificationTokenEntity)
+
+        // 3. Send new verification email
+        try {
+            emailService.sendVerificationCode(user.email, verificationCode)
+        } catch (e: Exception) {
+            println("Failed to send verification email: ${e.message}")
+            throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email")
+        }
+    }
 }
