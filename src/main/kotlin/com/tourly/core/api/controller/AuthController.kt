@@ -6,6 +6,7 @@ import com.tourly.core.api.dto.auth.RefreshTokenRequestDto
 import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import com.tourly.core.api.dto.auth.RegisterRequestDto
 import com.tourly.core.api.dto.auth.RegisterResponseDto
+import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.service.AuthService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -66,8 +67,11 @@ class AuthController(
 
     @Operation(summary = "Google Login", description = "Authenticates a user via Google ID Token")
     @PostMapping("/google")
-    fun googleLogin(@RequestParam idToken: String): ResponseEntity<LoginResponseDto> {
-        val response = authService.googleLogin(idToken)
+    fun googleLogin(
+        @RequestParam idToken: String,
+        @RequestParam(required = false) role: UserRole?
+    ): ResponseEntity<LoginResponseDto> {
+        val response = authService.googleLogin(idToken, role)
         return ResponseEntity.ok(response)
     }
 }
