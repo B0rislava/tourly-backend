@@ -1,13 +1,23 @@
 package com.tourly.core.api.controller
 
-import com.tourly.core.api.dto.auth.*
+import com.tourly.core.api.dto.auth.LoginRequestDto
+import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RefreshTokenRequestDto
+import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
+import com.tourly.core.api.dto.auth.RegisterRequestDto
+import com.tourly.core.api.dto.auth.RegisterResponseDto
+import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.service.AuthService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 
 @Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
@@ -53,5 +63,15 @@ class AuthController(
     fun resendCode(@RequestParam email: String): ResponseEntity<Unit> {
         authService.resendVerificationCode(email)
         return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Google Login", description = "Authenticates a user via Google ID Token")
+    @PostMapping("/google")
+    fun googleLogin(
+        @RequestParam idToken: String,
+        @RequestParam(required = false) role: UserRole?
+    ): ResponseEntity<LoginResponseDto> {
+        val response = authService.googleLogin(idToken, role)
+        return ResponseEntity.ok(response)
     }
 }

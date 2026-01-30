@@ -1,6 +1,10 @@
 package com.tourly.core.service
 
-import com.tourly.core.api.dto.auth.*
+import com.tourly.core.api.dto.auth.LoginRequestDto
+import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
+import com.tourly.core.api.dto.auth.RegisterRequestDto
+import com.tourly.core.api.dto.auth.RegisterResponseDto
 import com.tourly.core.data.entity.RefreshTokenEntity
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.entity.VerificationTokenEntity
@@ -10,7 +14,13 @@ import com.tourly.core.data.repository.VerificationTokenRepository
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
 import com.tourly.core.mapper.UserMapper
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.security.JWTUtil
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -18,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.Collections
 
 @Service
 class AuthService(
@@ -27,7 +38,9 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
     private val jwtUtil: JWTUtil,
-    private val emailService: EmailService
+    private val emailService: EmailService,
+    @Value($$"${google.clientId}")
+    private val googleClientId: String
 ) {
 
     fun register(request: RegisterRequestDto): RegisterResponseDto {
@@ -240,5 +253,46 @@ class AuthService(
             println("Failed to send verification email: ${e.message}")
             throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email")
         }
+    }
+
+    fun googleLogin(idToken: String, role: UserRole? = null): LoginResponseDto {
+        val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory())
+            .setAudience(Collections.singletonList(googleClientId))
+            .build()
+
+        val idTokenObj: GoogleIdToken = verifier.verify(idToken)
+            ?: throw APIException(ErrorCode.UNAUTHORIZED, "Invalid Google ID Token")
+
+        val payload = idTokenObj.payload
+        val email = payload.email
+
+        var user = userRepository.findByEmail(email)
+
+        if (user == null) {
+            if (role == null) {
+                throw APIException(ErrorCode.GOOGLE_USER_NOT_FOUND, "Google user not registered")
+            }
+            // Auto-register if user doesn't exist and role is provided
+            user = UserEntity(
+                id = null,
+                email = email,
+                firstName = payload["given_name"] as String? ?: "",
+                lastName = payload["family_name"] as String? ?: "",
+                password = "", // No password for Google users
+                role = role,
+                isVerified = true, // Google emails are verified
+                profilePictureUrl = payload["picture"] as String?
+            )
+            user = userRepository.save(user)
+        }
+
+        val token = jwtUtil.generateAccessToken(user.email, listOf(user.role.name))
+        val refreshToken = createAndSaveRefreshToken(user.id!!, user.email)
+
+        return LoginResponseDto(
+            token = token,
+            refreshToken = refreshToken,
+            user = UserMapper.toDto(user)
+        )
     }
 }

@@ -55,6 +55,10 @@ dependencies {
 
 	// Swagger/OpenAPI
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
+
+	// Google Auth
+	implementation("com.google.api-client:google-api-client:2.7.0")
+	implementation("com.google.guava:guava:33.4.0-jre")
 }
 
 kotlin {

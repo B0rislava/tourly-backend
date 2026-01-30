@@ -13,5 +13,6 @@ enum class ErrorCode(
     BAD_REQUEST("TY-3", "Bad Request", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED("TY-4", "Unauthorized", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("TY-5", "Forbidden", HttpStatus.FORBIDDEN),
-    CONFLICT("TY-6", "Conflict", HttpStatus.CONFLICT)
+    CONFLICT("TY-6", "Conflict", HttpStatus.CONFLICT),
+    GOOGLE_USER_NOT_FOUND("TY-7", "Google user not registered", HttpStatus.NOT_FOUND)
 }

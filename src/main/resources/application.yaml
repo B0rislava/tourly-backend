@@ -68,3 +68,6 @@ cloudinary:
   cloud_name: ${CLOUDINARY_NAME}
   api_key: ${CLOUDINARY_KEY}
   api_secret: ${CLOUDINARY_SECRET}
+
+google:
+  clientId: ${GOOGLE_CLIENT_ID}
