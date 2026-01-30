@@ -1,6 +1,10 @@
 package com.tourly.core.service
 
-import com.tourly.core.api.dto.auth.*
+import com.tourly.core.api.dto.auth.LoginRequestDto
+import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
+import com.tourly.core.api.dto.auth.RegisterRequestDto
+import com.tourly.core.api.dto.auth.RegisterResponseDto
 import com.tourly.core.data.entity.RefreshTokenEntity
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.entity.VerificationTokenEntity
@@ -240,5 +244,10 @@ class AuthService(
             println("Failed to send verification email: ${e.message}")
             throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email")
         }
+    }
+
+    fun googleLogin(idToken: String): LoginResponseDto {
+        // TODO: Verify idToken with Google
+        throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Google Login logic is being implemented.")
     }
 }
