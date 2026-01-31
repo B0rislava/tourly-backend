@@ -1,5 +1,6 @@
 package com.tourly.core.data.entity
 
+import com.tourly.core.config.Constants
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -61,7 +62,7 @@ data class TourEntity(
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "status", nullable = false)
-    var status: String = "ACTIVE",
+    var status: String = Constants.TourStatus.ACTIVE,
 
     @Column(name = "rating")
     val rating: Double? = 0.0,
@@ -74,7 +75,6 @@ data class TourEntity(
 
     @Column(name = "image_url")
     var imageUrl: String? = null,
-
 
     @Column(name = "latitude")
     var latitude: Double? = null,

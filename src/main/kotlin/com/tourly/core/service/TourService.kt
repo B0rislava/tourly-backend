@@ -11,7 +11,8 @@ import com.tourly.core.data.repository.BookingRepository
 import com.tourly.core.data.specification.TourSpecification
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
-import com.tourly.core.mapper.TourMapper
+import com.tourly.core.data.mapper.TourMapper
+import com.tourly.core.config.Constants
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -50,8 +51,8 @@ class TourService(
         if (image != null) {
             val imageUrl = cloudinaryService.uploadImage(
                 image,
-                "tour_images",
-                "tour_${savedTour.id}"
+                Constants.Cloudinary.FOLDER_TOUR_IMAGES,
+                "${Constants.Cloudinary.PREFIX_TOUR}${savedTour.id}"
             )
             savedTour.imageUrl = imageUrl
             tourRepository.save(savedTour)
@@ -72,7 +73,7 @@ class TourService(
             ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Guide ID is null after DB fetch")
 
         return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
-            .filter { it.status != "DELETED" }
+            .filter { it.status != Constants.TourStatus.DELETED }
             .map(TourMapper::toDto)
     }
 
@@ -148,8 +149,8 @@ class TourService(
         if (image != null) {
             val imageUrl = cloudinaryService.uploadImage(
                 image,
-                "tour_images",
-                "tour_${tour.id}"
+                Constants.Cloudinary.FOLDER_TOUR_IMAGES,
+                "${Constants.Cloudinary.PREFIX_TOUR}${tour.id}"
             )
             tour.imageUrl = imageUrl
         }
@@ -168,27 +169,27 @@ class TourService(
         }
 
         // Find all bookings to cancel and notify
-        val bookings = bookingRepository.findAllByTourIdAndStatus(tour.id, "CONFIRMED")
+        val bookings = bookingRepository.findAllByTourIdAndStatus(tour.id, Constants.BookingStatus.CONFIRMED)
         bookings.forEach { booking ->
-            booking.status = "CANCELLED"
+            booking.status = Constants.BookingStatus.CANCELLED
             notificationService.createNotification(
                 user = booking.user,
                 title = "Tour Cancelled",
                 message = "The tour '${tour.title}' has been cancelled by the guide.",
-                type = "TOUR_CANCELLED",
+                type = Constants.NotificationType.TOUR_CANCELLED,
                 relatedId = tour.id
             )
         }
         bookingRepository.saveAll(bookings)
 
-        tour.status = "DELETED"
+        tour.status = Constants.TourStatus.DELETED
         tourRepository.save(tour)
     }
 
     @Transactional(readOnly = true)
     fun getTour(id: Long): CreateTourResponseDto {
         val tour = tourRepository.findById(id)
-            .filter { it.status != "DELETED" }
+            .filter { it.status != Constants.TourStatus.DELETED }
             .orElseThrow {
                 APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id")
             }

@@ -1,5 +1,6 @@
 package com.tourly.core.service
 
+import com.tourly.core.config.Constants
 import com.tourly.core.api.dto.UpdateProfileRequestDto
 import com.tourly.core.api.dto.UserDto
 import com.tourly.core.data.repository.BookingRepository
@@ -60,7 +61,11 @@ class UserService(
 
     @Transactional
     fun updateProfilePicture(userId: Long, file: MultipartFile): UserDto {
-        val imageUrl = cloudinaryService.uploadImage(file, "avatars", "user_$userId")
+        val imageUrl = cloudinaryService.uploadImage(
+            file, 
+            Constants.Cloudinary.FOLDER_AVATARS, 
+            "${Constants.Cloudinary.PREFIX_USER}$userId"
+        )
 
         val user = findUser(userId)
         user.profilePictureUrl = imageUrl

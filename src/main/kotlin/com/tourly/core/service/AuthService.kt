@@ -13,7 +13,8 @@ import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.data.repository.VerificationTokenRepository
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
-import com.tourly.core.mapper.UserMapper
+import com.tourly.core.data.mapper.UserMapper
+import com.tourly.core.config.Constants
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -76,11 +77,11 @@ class AuthService(
         val savedUser = userRepository.save(user)
 
         // Generate verification code (6 digits)
-        val verificationCode = (100000..999999).random().toString()
+        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
         val verificationTokenEntity = VerificationTokenEntity(
             token = verificationCode,
             userId = savedUser.id!!,
-            expiresAt = LocalDateTime.now().plusMinutes(15)
+            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
         )
         verificationTokenRepository.save(verificationTokenEntity)
 
@@ -228,9 +229,9 @@ class AuthService(
         // Rate limiting: Check if a code was sent recently (e.g., within the last 60 seconds)
         val lastToken = verificationTokenRepository.findTopByUserIdOrderByExpiresAtDesc(user.id!!)
         if (lastToken != null) {
-            val sentAt = lastToken.expiresAt.minusMinutes(15) // We set expiresAt = now + 15m
-            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(60))) {
-                throw APIException(ErrorCode.BAD_REQUEST, "Please wait 60 seconds before requesting a new code.")
+            val sentAt = lastToken.expiresAt.minusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS))) {
+                throw APIException(ErrorCode.BAD_REQUEST, "Please wait ${Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS} seconds before requesting a new code.")
             }
         }
 
@@ -238,11 +239,11 @@ class AuthService(
         verificationTokenRepository.deleteByUserId(user.id!!)
 
         // 2. Generate new 6-digit code
-        val verificationCode = (100000..999999).random().toString()
+        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
         val verificationTokenEntity = VerificationTokenEntity(
             token = verificationCode,
             userId = user.id!!,
-            expiresAt = LocalDateTime.now().plusMinutes(15)
+            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
         )
         verificationTokenRepository.save(verificationTokenEntity)
 
