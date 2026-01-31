@@ -110,7 +110,7 @@ class AuthService(
         // 2. Attempt authentication
         if (!user.isVerified) {
             throw APIException(
-                errorCode = ErrorCode.UNAUTHORIZED,
+                errorCode = ErrorCode.EMAIL_NOT_VERIFIED,
                 description = "Please verify your email address before logging in."
             )
         }
