@@ -1,8 +1,10 @@
 package com.tourly.core.service
 
+import com.tourly.core.api.dto.notification.NotificationDto
 import com.tourly.core.data.entity.NotificationEntity
 import com.tourly.core.data.entity.UserEntity
 import com.tourly.core.data.repository.NotificationRepository
+import com.tourly.core.data.mapper.NotificationMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,8 +25,9 @@ class NotificationService(
     }
 
     @Transactional(readOnly = true)
-    fun getNotificationsForUser(userId: Long): List<NotificationEntity> {
+    fun getNotificationsForUser(userId: Long): List<NotificationDto> {
         return notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+            .map { NotificationMapper.toDto(it) }
     }
 
     @Transactional(readOnly = true)

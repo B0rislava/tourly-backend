@@ -9,7 +9,7 @@ import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
-import com.tourly.core.mapper.UserMapper
+import com.tourly.core.data.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -96,6 +96,12 @@ class UserService(
                 errorCode = ErrorCode.RESOURCE_NOT_FOUND,
                 description = "User not found with email: $email"
             )
+
+    @Transactional(readOnly = true)
+    fun getUserIdByEmail(email: String): Long {
+        return getUserByEmail(email).id 
+            ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is null for $email")
+    }
 
     private fun findUser(userId: Long) =
         userRepository.findByIdOrNull(userId)

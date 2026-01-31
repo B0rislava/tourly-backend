@@ -1,4 +1,4 @@
-package com.tourly.core.mapper
+package com.tourly.core.data.mapper
 
 import com.tourly.core.api.dto.UserDto
 import com.tourly.core.data.entity.UserEntity
