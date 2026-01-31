@@ -1,4 +1,4 @@
-package com.tourly.core.mapper
+package com.tourly.core.data.mapper
 
 import com.tourly.core.api.dto.tour.CreateTourRequestDto
 import com.tourly.core.api.dto.tour.CreateTourResponseDto
@@ -21,17 +21,16 @@ object TourMapper {
             availableSpots = tour.availableSpots,
             pricePerPerson = tour.pricePerPerson,
             scheduledDate = tour.scheduledDate?.toString(),
+            startTime = tour.startTime?.toString(),
             createdAt = tour.createdAt.format(DateTimeFormatter.ISO_DATE_TIME),
             status = tour.status,
             rating = tour.rating ?: 0.0,
             reviewsCount = tour.reviewsCount ?: 0,
             meetingPoint = tour.meetingPoint,
             imageUrl = tour.imageUrl,
-            cancellationPolicy = tour.cancellationPolicy,
             whatsIncluded = tour.whatsIncluded,
             guideBio = tour.guide.bio,
             guideRating = tour.guide.rating ?: 0.0,
-            guideToursCompleted = tour.guide.toursCompleted ?: 0,
             guideImageUrl = tour.guide.profilePictureUrl,
             latitude = tour.latitude,
             longitude = tour.longitude,
@@ -49,6 +48,7 @@ object TourMapper {
             pricePerPerson = request.pricePerPerson,
             whatsIncluded = request.whatsIncluded ?: "",
             scheduledDate = request.scheduledDate,
+            startTime = request.startTime,
             latitude = request.latitude,
             longitude = request.longitude,
             meetingPoint = request.meetingPoint,
@@ -68,6 +68,7 @@ object TourMapper {
         tour.pricePerPerson = request.pricePerPerson
         tour.whatsIncluded = request.whatsIncluded ?: ""
         tour.scheduledDate = request.scheduledDate
+        tour.startTime = request.startTime
         tour.latitude = request.latitude
         tour.longitude = request.longitude
         tour.meetingPoint = request.meetingPoint

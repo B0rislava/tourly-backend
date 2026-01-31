@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Entity
 @Table(name = "tours")
@@ -53,6 +54,9 @@ data class TourEntity(
     @Column(name = "scheduled_date", nullable = true)
     var scheduledDate: LocalDate? = null,
 
+    @Column(name = "start_time", nullable = true)
+    var startTime: LocalTime? = null,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
@@ -71,8 +75,6 @@ data class TourEntity(
     @Column(name = "image_url")
     var imageUrl: String? = null,
 
-    @Column(name = "cancellation_policy", length = 1000)
-    val cancellationPolicy: String? = null,
 
     @Column(name = "latitude")
     var latitude: Double? = null,
