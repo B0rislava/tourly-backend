@@ -32,6 +32,12 @@ class UserController(
         )
     }
 
+    @Operation(summary = "Get user profile by ID", description = "Fetches the profile details of a user by their ID")
+    @GetMapping("/{id}")
+    fun getUserProfile(@PathVariable id: Long): ResponseEntity<UserDto> {
+        return ResponseEntity.ok(userService.getUserProfileById(id))
+    }
+
     @Operation(summary = "Update profile", description = "Updates the profile details of the currently authenticated user")
     @PutMapping("/me")
     fun updateProfile(

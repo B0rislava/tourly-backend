@@ -51,6 +51,13 @@ class TourController(
         return ResponseEntity.ok(tours)
     }
 
+    @Operation(summary = "Get tours by guide ID", description = "Fetches all active tours created by a specific guide")
+    @GetMapping("/guide/{guideId}")
+    fun getToursByGuideId(@PathVariable guideId: Long): ResponseEntity<List<CreateTourResponseDto>> {
+        val tours = tourService.getToursByGuideId(guideId)
+        return ResponseEntity.ok(tours)
+    }
+
     @Operation(summary = "Search tours", description = "Fetches all active tours based on various filter criteria")
     @GetMapping
     fun getAllTours(

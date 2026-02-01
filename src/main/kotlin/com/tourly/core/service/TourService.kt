@@ -78,6 +78,13 @@ class TourService(
     }
 
     @Transactional(readOnly = true)
+    fun getToursByGuideId(guideId: Long): List<CreateTourResponseDto> {
+        return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
+            .filter { it.status != Constants.TourStatus.DELETED }
+            .map(TourMapper::toDto)
+    }
+
+    @Transactional(readOnly = true)
     fun getAllActiveTours(
         location: String?,
         tags: List<String>?,

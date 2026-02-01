@@ -33,6 +33,12 @@ class UserService(
         return UserMapper.toDto(user)
     }
 
+    @Transactional(readOnly = true)
+    fun getUserProfileById(userId: Long): UserDto {
+        val user = findUser(userId)
+        return UserMapper.toDto(user)
+    }
+
     @Transactional
     fun updateProfile(userId: Long, request: UpdateProfileRequestDto): UserDto {
         val user = findUser(userId)
