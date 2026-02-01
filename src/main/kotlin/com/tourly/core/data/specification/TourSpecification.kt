@@ -1,5 +1,6 @@
 package com.tourly.core.data.specification
 
+import com.tourly.core.config.Constants
 import com.tourly.core.data.entity.TagEntity
 import com.tourly.core.data.entity.TourEntity
 import jakarta.persistence.criteria.Join
@@ -135,7 +136,7 @@ object TourSpecification {
      * Combines all filter specifications into a single specification
      */
     fun buildSpecification(
-        status: String = "ACTIVE",
+        status: String = Constants.TourStatus.ACTIVE,
         location: String? = null,
         tagNames: List<String>? = null,
         minPrice: Double? = null,

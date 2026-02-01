@@ -1,5 +1,6 @@
 package com.tourly.core.service
 
+import com.tourly.core.config.Constants
 import com.tourly.core.api.dto.UpdateProfileRequestDto
 import com.tourly.core.api.dto.UserDto
 import com.tourly.core.data.repository.BookingRepository
@@ -9,7 +10,7 @@ import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
-import com.tourly.core.mapper.UserMapper
+import com.tourly.core.data.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -60,7 +61,11 @@ class UserService(
 
     @Transactional
     fun updateProfilePicture(userId: Long, file: MultipartFile): UserDto {
-        val imageUrl = cloudinaryService.uploadImage(file, "avatars", "user_$userId")
+        val imageUrl = cloudinaryService.uploadImage(
+            file, 
+            Constants.Cloudinary.FOLDER_AVATARS, 
+            "${Constants.Cloudinary.PREFIX_USER}$userId"
+        )
 
         val user = findUser(userId)
         user.profilePictureUrl = imageUrl
@@ -96,6 +101,12 @@ class UserService(
                 errorCode = ErrorCode.RESOURCE_NOT_FOUND,
                 description = "User not found with email: $email"
             )
+
+    @Transactional(readOnly = true)
+    fun getUserIdByEmail(email: String): Long {
+        return getUserByEmail(email).id 
+            ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is null for $email")
+    }
 
     private fun findUser(userId: Long) =
         userRepository.findByIdOrNull(userId)

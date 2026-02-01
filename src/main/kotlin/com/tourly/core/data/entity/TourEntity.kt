@@ -1,5 +1,6 @@
 package com.tourly.core.data.entity
 
+import com.tourly.core.config.Constants
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -13,6 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Entity
 @Table(name = "tours")
@@ -53,11 +55,14 @@ data class TourEntity(
     @Column(name = "scheduled_date", nullable = true)
     var scheduledDate: LocalDate? = null,
 
+    @Column(name = "start_time", nullable = true)
+    var startTime: LocalTime? = null,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "status", nullable = false)
-    var status: String = "ACTIVE",
+    var status: String = Constants.TourStatus.ACTIVE,
 
     @Column(name = "rating")
     val rating: Double? = 0.0,
@@ -70,9 +75,6 @@ data class TourEntity(
 
     @Column(name = "image_url")
     var imageUrl: String? = null,
-
-    @Column(name = "cancellation_policy", length = 1000)
-    val cancellationPolicy: String? = null,
 
     @Column(name = "latitude")
     var latitude: Double? = null,

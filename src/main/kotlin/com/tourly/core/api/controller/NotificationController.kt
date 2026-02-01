@@ -1,7 +1,6 @@
 package com.tourly.core.api.controller
 
 import com.tourly.core.api.dto.notification.NotificationDto
-import com.tourly.core.mapper.NotificationMapper
 import com.tourly.core.service.NotificationService
 import com.tourly.core.service.UserService
 import org.springframework.http.ResponseEntity
@@ -24,16 +23,16 @@ class NotificationController(
     @Operation(summary = "Get notifications", description = "Fetches all notifications for the currently authenticated user")
     @GetMapping
     fun getNotifications(authentication: Authentication): ResponseEntity<List<NotificationDto>> {
-        val user = userService.getUserByEmail(authentication.name)
-        val notifications = notificationService.getNotificationsForUser(user.id!!)
-        return ResponseEntity.ok(notifications.map { NotificationMapper.toDto(it) })
+        val userId = userService.getUserIdByEmail(authentication.name)
+        val notifications = notificationService.getNotificationsForUser(userId)
+        return ResponseEntity.ok(notifications)
     }
 
     @Operation(summary = "Get unread count", description = "Returns the number of unread notifications for the user")
     @GetMapping("/unread-count")
     fun getUnreadCount(authentication: Authentication): ResponseEntity<Int> {
-        val user = userService.getUserByEmail(authentication.name)
-        return ResponseEntity.ok(notificationService.getUnreadCount(user.id!!))
+        val userId = userService.getUserIdByEmail(authentication.name)
+        return ResponseEntity.ok(notificationService.getUnreadCount(userId))
     }
 
     @Operation(summary = "Mark as read", description = "Marks a specific notification as read")
@@ -42,16 +41,16 @@ class NotificationController(
         @PathVariable id: Long,
         authentication: Authentication
     ): ResponseEntity<Unit> {
-        val user = userService.getUserByEmail(authentication.name)
-        notificationService.markAsRead(id, user.id!!)
+        val userId = userService.getUserIdByEmail(authentication.name)
+        notificationService.markAsRead(id, userId)
         return ResponseEntity.ok().build()
     }
 
     @Operation(summary = "Mark all as read", description = "Marks all notifications for the current user as read")
     @PostMapping("/read-all")
     fun markAllAsRead(authentication: Authentication): ResponseEntity<Unit> {
-        val user = userService.getUserByEmail(authentication.name)
-        notificationService.markAllAsRead(user.id!!)
+        val userId = userService.getUserIdByEmail(authentication.name)
+        notificationService.markAllAsRead(userId)
         return ResponseEntity.ok().build()
     }
 }
