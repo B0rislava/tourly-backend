@@ -11,6 +11,7 @@ import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
 import com.tourly.core.data.mapper.UserMapper
+import com.tourly.core.data.repository.FollowRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -24,13 +25,28 @@ class UserService(
     private val cloudinaryService: CloudinaryService,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val bookingRepository: BookingRepository,
-    private val tourRepository: TourRepository
+    private val tourRepository: TourRepository,
+    private val followRepository: FollowRepository,
+    private val notificationService: NotificationService
 ) {
 
     @Transactional(readOnly = true)
     fun getCurrentUserProfile(userId: Long): UserDto {
         val user = findUser(userId)
-        return UserMapper.toDto(user)
+        val followerCount = followRepository.countFollowersByUserId(userId).toInt()
+        val followingCount = followRepository.countFollowingByUserId(userId).toInt()
+        return UserMapper.toDto(user, followerCount = followerCount, followingCount = followingCount)
+    }
+
+    @Transactional(readOnly = true)
+    fun getUserProfileById(userId: Long, currentUserId: Long? = null): UserDto {
+        val user = findUser(userId)
+        val isFollowing = currentUserId?.let { 
+            followRepository.existsByFollowerIdAndFollowingId(it, userId)
+        } ?: false
+        val followerCount = followRepository.countFollowersByUserId(userId).toInt()
+        val followingCount = followRepository.countFollowingByUserId(userId).toInt()
+        return UserMapper.toDto(user, isFollowing, followerCount, followingCount)
     }
 
     @Transactional
@@ -56,7 +72,10 @@ class UserService(
             user.password = passwordEncoder.encode(request.password).toString()
         }
 
-        return UserMapper.toDto(user)
+        val updatedUser = userRepository.save(user)
+        val followerCount = followRepository.countFollowersByUserId(userId).toInt()
+        val followingCount = followRepository.countFollowingByUserId(userId).toInt()
+        return UserMapper.toDto(updatedUser, followerCount = followerCount, followingCount = followingCount)
     }
 
     @Transactional
@@ -69,8 +88,11 @@ class UserService(
 
         val user = findUser(userId)
         user.profilePictureUrl = imageUrl
+        val updatedUser = userRepository.save(user)
 
-        return UserMapper.toDto(user)
+        val followerCount = followRepository.countFollowersByUserId(userId).toInt()
+        val followingCount = followRepository.countFollowingByUserId(userId).toInt()
+        return UserMapper.toDto(updatedUser, followerCount = followerCount, followingCount = followingCount)
     }
 
     @Transactional
@@ -79,6 +101,9 @@ class UserService(
         
         // 1. Delete Refresh Tokens
         refreshTokenRepository.deleteAllByUserId(userId)
+        
+        // 2. Delete Follow Relationships
+        followRepository.deleteAllByUserId(userId)
         
         // 3. Handle Bookings and Tours
         if (user.role == UserRole.TRAVELER) {
@@ -106,6 +131,69 @@ class UserService(
     fun getUserIdByEmail(email: String): Long {
         return getUserByEmail(email).id 
             ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is null for $email")
+    }
+
+    @Transactional
+    fun followUser(followerId: Long, followingId: Long) {
+        if (followerId == followingId) {
+            throw APIException(
+                errorCode = ErrorCode.BAD_REQUEST,
+                description = "Cannot follow yourself"
+            )
+        }
+
+        // Check if both users exist
+        val follower = findUser(followerId)
+        val userToFollow = findUser(followingId)
+
+        // Check if already following
+        if (followRepository.existsByFollowerIdAndFollowingId(followerId, followingId)) {
+            throw APIException(
+                errorCode = ErrorCode.CONFLICT,
+                description = "Already following this user"
+            )
+        }
+
+        // Create follow relationship
+        followRepository.save(
+            com.tourly.core.data.entity.FollowEntity(
+                followerId = followerId,
+                followingId = followingId
+            )
+        )
+
+        // Send notification
+        notificationService.createNotification(
+            user = userToFollow,
+            title = "New Follower",
+            message = "${follower.firstName} ${follower.lastName}",
+            type = "FOLLOW",
+            relatedId = follower.id
+        )
+    }
+
+    @Transactional
+    fun unfollowUser(followerId: Long, followingId: Long) {
+        if (followerId == followingId) {
+            throw APIException(
+                errorCode = ErrorCode.BAD_REQUEST,
+                description = "Cannot unfollow yourself"
+            )
+        }
+
+        // Check if both users exist
+        findUser(followerId)
+        findUser(followingId)
+
+        // Delete follow relationship
+        val deletedCount = followRepository.deleteByFollowerIdAndFollowingId(followerId, followingId)
+        
+        if (deletedCount == 0) {
+            throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "Not following this user"
+            )
+        }
     }
 
     private fun findUser(userId: Long) =

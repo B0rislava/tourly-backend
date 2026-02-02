@@ -5,6 +5,7 @@ import com.tourly.core.api.dto.booking.BookingResponseDto
 import com.tourly.core.data.entity.BookingEntity
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.data.repository.BookingRepository
+import com.tourly.core.data.repository.ReviewRepository
 import com.tourly.core.data.repository.TourRepository
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.exception.APIException
@@ -18,7 +19,8 @@ class BookingService(
     private val bookingRepository: BookingRepository,
     private val tourRepository: TourRepository,
     private val userRepository: UserRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val reviewRepository: ReviewRepository
 ) {
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -78,7 +80,7 @@ class BookingService(
         notificationService.createNotification(
             user = tour.guide,
             title = "New Booking",
-            message = "Someone has booked ${request.numberOfParticipants} spot(s) for your tour '${tour.title}'.",
+            message = "${user.firstName} ${user.lastName}|${request.numberOfParticipants}|${tour.title}",
             type = "NEW_BOOKING",
             relatedId = tour.id
         )
@@ -86,11 +88,20 @@ class BookingService(
         return mapToResponseDto(savedBooking)
     }
 
+    @Transactional(readOnly = true)
     fun getUserBookings(userEmail: String): List<BookingResponseDto> {
         val user = userRepository.findByEmail(userEmail)
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
 
         val bookings = bookingRepository.findAllByUserIdOrderByBookingDateDesc(user.id!!)
+        return bookings
+            .filter { it.tour.status != "DELETED" }
+            .map { mapToResponseDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getGuideBookings(guideEmail: String): List<BookingResponseDto> {
+        val bookings = bookingRepository.findAllByTourGuideEmailOrderByBookingDateDesc(guideEmail)
         return bookings
             .filter { it.tour.status != "DELETED" }
             .map { mapToResponseDto(it) }
@@ -126,8 +137,8 @@ class BookingService(
         notificationService.createNotification(
             user = booking.user,
             title = "Booking Cancelled",
-            message = "Your booking for '${tour.title}' has been cancelled.",
-            type = "BOOKING_CANCELLED",
+            message = tour.title,
+            type = "BOOKING_CANCELLED_TRAVELER",
             relatedId = tour.id
         )
 
@@ -135,10 +146,19 @@ class BookingService(
         notificationService.createNotification(
             user = tour.guide,
             title = "Booking Cancelled",
-            message = "A traveler has cancelled their booking for your tour '${tour.title}'.",
-            type = "BOOKING_CANCELLED",
+            message = "${user.firstName} ${user.lastName}|${tour.title}",
+            type = "BOOKING_CANCELLED_GUIDE",
             relatedId = tour.id
         )
+    }
+
+    @Transactional
+    fun completeBooking(bookingId: Long) {
+        val booking = bookingRepository.findById(bookingId).orElseThrow {
+            APIException(ErrorCode.RESOURCE_NOT_FOUND, "Booking not found")
+        }
+        booking.status = "COMPLETED"
+        bookingRepository.save(booking)
     }
 
     private fun mapToResponseDto(booking: BookingEntity): BookingResponseDto {
@@ -156,7 +176,10 @@ class BookingService(
             bookingDate = booking.bookingDate.format(dateTimeFormatter),
             status = booking.status,
             pricePerPerson = tour.pricePerPerson,
-            totalPrice = totalPrice
+            totalPrice = totalPrice,
+            hasReview = reviewRepository.existsByBookingId(booking.id),
+            customerName = "${booking.user.firstName} ${booking.user.lastName}",
+            customerImageUrl = booking.user.profilePictureUrl
         )
     }
 }

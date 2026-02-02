@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository
 interface BookingRepository : JpaRepository<BookingEntity, Long> {
     @EntityGraph(attributePaths = ["tour", "tour.guide", "tour.tags"])
     fun findAllByUserIdOrderByBookingDateDesc(userId: Long): List<BookingEntity>
+
+    @EntityGraph(attributePaths = ["tour", "tour.guide", "user"])
+    fun findAllByTourGuideEmailOrderByBookingDateDesc(email: String): List<BookingEntity>
     
     fun findAllByTourIdAndStatus(tourId: Long, status: String): List<BookingEntity>
     

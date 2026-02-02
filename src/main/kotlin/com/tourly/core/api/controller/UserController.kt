@@ -32,6 +32,16 @@ class UserController(
         )
     }
 
+    @Operation(summary = "Get user profile by ID", description = "Fetches the profile details of a user by their ID")
+    @GetMapping("/{id}")
+    fun getUserProfile(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: CustomUserDetails?
+    ): ResponseEntity<UserDto> {
+        val currentUserId = principal?.getUserId()
+        return ResponseEntity.ok(userService.getUserProfileById(id, currentUserId))
+    }
+
     @Operation(summary = "Update profile", description = "Updates the profile details of the currently authenticated user")
     @PutMapping("/me")
     fun updateProfile(
@@ -66,6 +76,26 @@ class UserController(
         val userId = userDetails.getUserId()
         val updatedUser = userService.updateProfilePicture(userId, file)
         return ResponseEntity.ok(updatedUser)
+    }
+
+    @Operation(summary = "Follow user", description = "Follow another user")
+    @PostMapping("/{id}/follow")
+    fun followUser(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @PathVariable id: Long
+    ): ResponseEntity<Unit> {
+        userService.followUser(userDetails.getUserId(), id)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Unfollow user", description = "Unfollow a user")
+    @DeleteMapping("/{id}/follow")
+    fun unfollowUser(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @PathVariable id: Long
+    ): ResponseEntity<Unit> {
+        userService.unfollowUser(userDetails.getUserId(), id)
+        return ResponseEntity.ok().build()
     }
 
     @Operation(summary = "Delete profile", description = "Deletes the currently authenticated user's account")

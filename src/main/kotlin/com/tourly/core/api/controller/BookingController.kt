@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.web.bind.annotation.PathVariable
 
 @Tag(name = "Bookings", description = "Endpoints for managing tour bookings")
 @RestController
@@ -42,15 +43,32 @@ class BookingController(
         return ResponseEntity.ok(bookings)
     }
 
+    @Operation(summary = "Get guide bookings", description = "Fetches all bookings for tours created by the currently authenticated guide")
+    @GetMapping("/guide")
+    @PreAuthorize("hasRole('GUIDE')")
+    fun getGuideBookings(authentication: Authentication): ResponseEntity<List<BookingResponseDto>> {
+        val email = authentication.name
+        val bookings = bookingService.getGuideBookings(email)
+        return ResponseEntity.ok(bookings)
+    }
+
     @Operation(summary = "Cancel booking", description = "Allows a traveler to cancel one of their existing bookings")
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('TRAVELER')")
     fun cancelBooking(
         authentication: Authentication,
-        @org.springframework.web.bind.annotation.PathVariable id: Long
+        @PathVariable id: Long
     ): ResponseEntity<Unit> {
         val email = authentication.name
         bookingService.cancelBooking(email, id)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Complete booking (Dev Tool)", description = "Forces a booking status to COMPLETED for testing purposes")
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("isAuthenticated()")
+    fun completeBooking(@PathVariable id: Long): ResponseEntity<Unit> {
+        bookingService.completeBooking(id)
         return ResponseEntity.ok().build()
     }
 }

@@ -8,7 +8,7 @@ import com.tourly.core.data.entity.UserEntity
 import java.time.format.DateTimeFormatter
 
 object TourMapper {
-    fun toDto(tour: TourEntity): CreateTourResponseDto =
+    fun toDto(tour: TourEntity, currentUser: UserEntity? = null): CreateTourResponseDto =
         CreateTourResponseDto(
             id = tour.id,
             tourGuideId = tour.guide.id!!,
@@ -34,7 +34,8 @@ object TourMapper {
             guideImageUrl = tour.guide.profilePictureUrl,
             latitude = tour.latitude,
             longitude = tour.longitude,
-            tags = tour.tags.map { TagMapper.toDto(it) }
+            tags = tour.tags.map { TagMapper.toDto(it) },
+            isSaved = currentUser?.savedTours?.any { it.id == tour.id } ?: false
         )
     fun toEntity(guide: UserEntity, request: CreateTourRequestDto, tags: Set<TagEntity>): TourEntity =
         TourEntity(

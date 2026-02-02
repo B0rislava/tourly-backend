@@ -48,5 +48,13 @@ data class UserEntity(
     var toursCompleted: Int? = 0,
 
     @Column(name = "is_verified", nullable = false)
-    var isVerified: Boolean = false
+    var isVerified: Boolean = false,
+
+    @ManyToMany
+    @JoinTable(
+        name = "saved_tours",
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "tour_id")]
+    )
+    val savedTours: MutableSet<TourEntity> = mutableSetOf()
 )
