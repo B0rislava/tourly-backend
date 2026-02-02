@@ -7,7 +7,12 @@ import org.springframework.stereotype.Component
 @Component
 object UserMapper {
 
-    fun toDto(user: UserEntity): UserDto =
+    fun toDto(
+        user: UserEntity, 
+        isFollowing: Boolean = false, 
+        followerCount: Int = 0, 
+        followingCount: Int = 0
+    ): UserDto =
         UserDto(
             id = user.id,
             email = user.email,
@@ -18,9 +23,11 @@ object UserMapper {
             bio = user.bio,
             rating = user.rating ?: 0.0,
             reviewsCount = user.reviewsCount ?: 0,
-            followerCount = user.followerCount ?: 0,
+            followerCount = followerCount,
+            followingCount = followingCount,
             certifications = user.certifications,
             toursCompleted = user.toursCompleted ?: 0,
-            isVerified = user.isVerified
+            isVerified = user.isVerified,
+            isFollowing = isFollowing
         )
 }

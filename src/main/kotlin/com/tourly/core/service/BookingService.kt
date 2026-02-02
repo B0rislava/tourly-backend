@@ -80,7 +80,7 @@ class BookingService(
         notificationService.createNotification(
             user = tour.guide,
             title = "New Booking",
-            message = "Someone has booked ${request.numberOfParticipants} spot(s) for your tour '${tour.title}'.",
+            message = "${user.firstName} ${user.lastName}|${request.numberOfParticipants}|${tour.title}",
             type = "NEW_BOOKING",
             relatedId = tour.id
         )
@@ -128,8 +128,8 @@ class BookingService(
         notificationService.createNotification(
             user = booking.user,
             title = "Booking Cancelled",
-            message = "Your booking for '${tour.title}' has been cancelled.",
-            type = "BOOKING_CANCELLED",
+            message = tour.title,
+            type = "BOOKING_CANCELLED_TRAVELER",
             relatedId = tour.id
         )
 
@@ -137,8 +137,8 @@ class BookingService(
         notificationService.createNotification(
             user = tour.guide,
             title = "Booking Cancelled",
-            message = "A traveler has cancelled their booking for your tour '${tour.title}'.",
-            type = "BOOKING_CANCELLED",
+            message = "${user.firstName} ${user.lastName}|${tour.title}",
+            type = "BOOKING_CANCELLED_GUIDE",
             relatedId = tour.id
         )
     }

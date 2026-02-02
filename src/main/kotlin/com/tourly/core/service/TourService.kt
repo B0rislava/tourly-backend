@@ -12,6 +12,7 @@ import com.tourly.core.data.specification.TourSpecification
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
 import com.tourly.core.data.mapper.TourMapper
+import com.tourly.core.data.repository.FollowRepository
 import com.tourly.core.config.Constants
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -26,7 +27,8 @@ class TourService(
     private val cloudinaryService: CloudinaryService,
     private val tagRepository: TagRepository,
     private val bookingRepository: BookingRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val followRepository: FollowRepository
 ) {
 
     @Transactional
@@ -56,6 +58,21 @@ class TourService(
             )
             savedTour.imageUrl = imageUrl
             tourRepository.save(savedTour)
+        }
+
+        // Notify followers
+        val followerIds = followRepository.findFollowerIdsByUserId(guide.id!!)
+        if (followerIds.isNotEmpty()) {
+            val followers = userRepository.findAllById(followerIds)
+            followers.forEach { follower ->
+                notificationService.createNotification(
+                    user = follower,
+                    title = "New Tour from ${guide.firstName}",
+                    message = "${guide.firstName} ${guide.lastName}|${savedTour.title}",
+                    type = "NEW_TOUR",
+                    relatedId = savedTour.id
+                )
+            }
         }
 
         return TourMapper.toDto(savedTour)
@@ -182,7 +199,7 @@ class TourService(
             notificationService.createNotification(
                 user = booking.user,
                 title = "Tour Cancelled",
-                message = "The tour '${tour.title}' has been cancelled by the guide.",
+                message = tour.title,
                 type = Constants.NotificationType.TOUR_CANCELLED,
                 relatedId = tour.id
             )
