@@ -5,6 +5,7 @@ import com.tourly.core.api.dto.booking.BookingResponseDto
 import com.tourly.core.data.entity.BookingEntity
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.data.repository.BookingRepository
+import com.tourly.core.data.repository.ReviewRepository
 import com.tourly.core.data.repository.TourRepository
 import com.tourly.core.data.repository.UserRepository
 import com.tourly.core.exception.APIException
@@ -18,7 +19,8 @@ class BookingService(
     private val bookingRepository: BookingRepository,
     private val tourRepository: TourRepository,
     private val userRepository: UserRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val reviewRepository: ReviewRepository
 ) {
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -141,6 +143,15 @@ class BookingService(
         )
     }
 
+    @Transactional
+    fun completeBooking(bookingId: Long) {
+        val booking = bookingRepository.findById(bookingId).orElseThrow {
+            APIException(ErrorCode.RESOURCE_NOT_FOUND, "Booking not found")
+        }
+        booking.status = "COMPLETED"
+        bookingRepository.save(booking)
+    }
+
     private fun mapToResponseDto(booking: BookingEntity): BookingResponseDto {
         val tour = booking.tour
         val totalPrice = tour.pricePerPerson * booking.numberOfParticipants
@@ -156,7 +167,8 @@ class BookingService(
             bookingDate = booking.bookingDate.format(dateTimeFormatter),
             status = booking.status,
             pricePerPerson = tour.pricePerPerson,
-            totalPrice = totalPrice
+            totalPrice = totalPrice,
+            hasReview = reviewRepository.existsByBookingId(booking.id)
         )
     }
 }
