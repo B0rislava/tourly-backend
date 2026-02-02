@@ -65,10 +65,10 @@ data class TourEntity(
     var status: String = Constants.TourStatus.ACTIVE,
 
     @Column(name = "rating")
-    val rating: Double? = 0.0,
+    var rating: Double? = 0.0,
 
     @Column(name = "reviews_count")
-    val reviewsCount: Int? = 0,
+    var reviewsCount: Int? = 0,
 
     @Column(name = "meeting_point")
     var meetingPoint: String? = null,

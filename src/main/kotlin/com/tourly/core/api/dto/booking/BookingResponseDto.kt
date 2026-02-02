@@ -11,5 +11,6 @@ data class BookingResponseDto(
     val bookingDate: String,
     val status: String,
     val pricePerPerson: Double,
-    val totalPrice: Double
+    val totalPrice: Double,
+    val hasReview: Boolean
 )
