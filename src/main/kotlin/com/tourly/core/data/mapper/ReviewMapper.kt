@@ -14,7 +14,8 @@ object ReviewMapper {
             tourRating = review.tourRating,
             guideRating = review.guideRating,
             comment = review.comment,
-            createdAt = review.createdAt
+            createdAt = review.createdAt,
+            tourTitle = review.tour.title
         )
     }
 }

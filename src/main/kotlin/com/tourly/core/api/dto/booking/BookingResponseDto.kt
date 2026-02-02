@@ -12,5 +12,7 @@ data class BookingResponseDto(
     val status: String,
     val pricePerPerson: Double,
     val totalPrice: Double,
-    val hasReview: Boolean
+    val hasReview: Boolean,
+    val customerName: String? = null,
+    val customerImageUrl: String? = null
 )

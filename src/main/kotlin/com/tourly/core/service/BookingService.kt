@@ -88,11 +88,20 @@ class BookingService(
         return mapToResponseDto(savedBooking)
     }
 
+    @Transactional(readOnly = true)
     fun getUserBookings(userEmail: String): List<BookingResponseDto> {
         val user = userRepository.findByEmail(userEmail)
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
 
         val bookings = bookingRepository.findAllByUserIdOrderByBookingDateDesc(user.id!!)
+        return bookings
+            .filter { it.tour.status != "DELETED" }
+            .map { mapToResponseDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getGuideBookings(guideEmail: String): List<BookingResponseDto> {
+        val bookings = bookingRepository.findAllByTourGuideEmailOrderByBookingDateDesc(guideEmail)
         return bookings
             .filter { it.tour.status != "DELETED" }
             .map { mapToResponseDto(it) }
@@ -168,7 +177,9 @@ class BookingService(
             status = booking.status,
             pricePerPerson = tour.pricePerPerson,
             totalPrice = totalPrice,
-            hasReview = reviewRepository.existsByBookingId(booking.id)
+            hasReview = reviewRepository.existsByBookingId(booking.id),
+            customerName = "${booking.user.firstName} ${booking.user.lastName}",
+            customerImageUrl = booking.user.profilePictureUrl
         )
     }
 }

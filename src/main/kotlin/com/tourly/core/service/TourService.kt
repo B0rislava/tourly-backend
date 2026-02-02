@@ -79,7 +79,7 @@ class TourService(
     }
 
     @Transactional(readOnly = true)
-    fun getToursByGuide(guideEmail: String): List<CreateTourResponseDto> {
+    fun getToursByGuide(guideEmail: String, currentUserEmail: String? = null): List<CreateTourResponseDto> {
         val guide = userRepository.findByEmail(guideEmail)
             ?: throw APIException(
                 errorCode = ErrorCode.RESOURCE_NOT_FOUND,
@@ -89,20 +89,24 @@ class TourService(
         val guideId = guide.id
             ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Guide ID is null after DB fetch")
 
+        val currentUser = currentUserEmail?.let { userRepository.findByEmail(it) }
+
         return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
             .filter { it.status != Constants.TourStatus.DELETED }
-            .map(TourMapper::toDto)
+            .map { TourMapper.toDto(it, currentUser) }
     }
 
     @Transactional(readOnly = true)
-    fun getToursByGuideId(guideId: Long): List<CreateTourResponseDto> {
+    fun getToursByGuideId(guideId: Long, currentUserEmail: String? = null): List<CreateTourResponseDto> {
+        val currentUser = currentUserEmail?.let { userRepository.findByEmail(it) }
         return tourRepository.findAllByGuideIdOrderByCreatedAtDesc(guideId)
             .filter { it.status != Constants.TourStatus.DELETED }
-            .map(TourMapper::toDto)
+            .map { TourMapper.toDto(it, currentUser) }
     }
 
     @Transactional(readOnly = true)
     fun getAllActiveTours(
+        currentUserEmail: String?,
         location: String?,
         tags: List<String>?,
         minPrice: Double?,
@@ -114,6 +118,7 @@ class TourService(
         sortBy: String?,
         sortOrder: String?
     ): List<CreateTourResponseDto> {
+        val currentUser = currentUserEmail?.let { userRepository.findByEmail(it) }
         val spec = TourSpecification.buildSpecification(
             location = location,
             tagNames = tags,
@@ -128,7 +133,7 @@ class TourService(
         val sort = createSort(sortBy, sortOrder)
 
         return tourRepository.findAll(spec, sort)
-            .map(TourMapper::toDto)
+            .map { TourMapper.toDto(it, currentUser) }
     }
 
     private fun createSort(sortBy: String?, sortOrder: String?): Sort {
@@ -157,6 +162,8 @@ class TourService(
             throw APIException(ErrorCode.FORBIDDEN, "You are not authorized to update this tour")
         }
 
+        val currentUser = userRepository.findByEmail(guideEmail)
+
         // Fetch tags if provided
         val tags = fetchTags(request.tagIds)
 
@@ -180,7 +187,7 @@ class TourService(
         }
 
         val updatedTour = tourRepository.save(tour)
-        return TourMapper.toDto(updatedTour)
+        return TourMapper.toDto(updatedTour, currentUser)
     }
 
     @Transactional
@@ -211,13 +218,39 @@ class TourService(
     }
 
     @Transactional(readOnly = true)
-    fun getTour(id: Long): CreateTourResponseDto {
+    fun getTour(id: Long, currentUserEmail: String?): CreateTourResponseDto {
         val tour = tourRepository.findById(id)
             .filter { it.status != Constants.TourStatus.DELETED }
             .orElseThrow {
                 APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found with id: $id")
             }
-        return TourMapper.toDto(tour)
+        val currentUser = currentUserEmail?.let { userRepository.findByEmail(it) }
+        return TourMapper.toDto(tour, currentUser)
+    }
+
+    @Transactional
+    fun toggleSavedTour(tourId: Long, userEmail: String): Boolean {
+        val user = userRepository.findByEmail(userEmail)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+        val tour = tourRepository.findById(tourId)
+            .orElseThrow { APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found") }
+
+        val isSaved = if (user.savedTours.any { it.id == tourId }) {
+            user.savedTours.remove(tour)
+            false
+        } else {
+            user.savedTours.add(tour)
+            true
+        }
+        userRepository.save(user)
+        return isSaved
+    }
+
+    @Transactional(readOnly = true)
+    fun getSavedTours(userEmail: String): List<CreateTourResponseDto> {
+        val user = userRepository.findByEmail(userEmail)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+        return user.savedTours.map { TourMapper.toDto(it, user) }
     }
 
     private fun fetchTags(tagIds: List<Long>?): MutableSet<TagEntity> {

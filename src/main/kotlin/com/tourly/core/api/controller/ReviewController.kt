@@ -49,4 +49,11 @@ class ReviewController(
         val reviewDtos = reviews.map { ReviewMapper.toDto(it) }
         return ResponseEntity.ok(reviewDtos)
     }
+
+    @GetMapping("/my")
+    fun getMyReviews(@AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<List<ReviewDto>> {
+        val reviews = reviewService.getReviewsForGuide(userDetails.getUserId())
+        val reviewDtos = reviews.map { ReviewMapper.toDto(it) }
+        return ResponseEntity.ok(reviewDtos)
+    }
 }

@@ -43,6 +43,15 @@ class BookingController(
         return ResponseEntity.ok(bookings)
     }
 
+    @Operation(summary = "Get guide bookings", description = "Fetches all bookings for tours created by the currently authenticated guide")
+    @GetMapping("/guide")
+    @PreAuthorize("hasRole('GUIDE')")
+    fun getGuideBookings(authentication: Authentication): ResponseEntity<List<BookingResponseDto>> {
+        val email = authentication.name
+        val bookings = bookingService.getGuideBookings(email)
+        return ResponseEntity.ok(bookings)
+    }
+
     @Operation(summary = "Cancel booking", description = "Allows a traveler to cancel one of their existing bookings")
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('TRAVELER')")
