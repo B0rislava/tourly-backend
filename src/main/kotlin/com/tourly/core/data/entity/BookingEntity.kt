@@ -1,5 +1,6 @@
 package com.tourly.core.data.entity
 
+import com.tourly.core.config.Constants
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -33,5 +34,5 @@ data class BookingEntity(
     val bookingDate: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "status", nullable = false)
-    var status: String = "CONFIRMED"
+    var status: String = Constants.BookingStatus.CONFIRMED
 )

@@ -23,6 +23,7 @@ object Constants {
     object BookingStatus {
         const val CONFIRMED = "CONFIRMED"
         const val CANCELLED = "CANCELLED"
+        const val COMPLETED = "COMPLETED"
     }
     
     object NotificationType {

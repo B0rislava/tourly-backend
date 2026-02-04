@@ -1,5 +1,6 @@
 package com.tourly.core.service
 
+import com.tourly.core.config.Constants
 import com.tourly.core.data.entity.ReviewEntity
 import com.tourly.core.data.repository.BookingRepository
 import com.tourly.core.data.repository.ReviewRepository
@@ -34,7 +35,7 @@ class ReviewService(
             throw APIException(ErrorCode.FORBIDDEN, "You can only review your own bookings")
         }
 
-        if (booking.status != "COMPLETED") { // Assuming "COMPLETED" is the status string
+        if (booking.status != Constants.BookingStatus.COMPLETED) {
             throw APIException(ErrorCode.BAD_REQUEST, "You can only review completed bookings")
         }
 

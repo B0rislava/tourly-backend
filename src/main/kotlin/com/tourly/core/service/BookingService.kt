@@ -2,6 +2,7 @@ package com.tourly.core.service
 
 import com.tourly.core.api.dto.booking.BookTourRequestDto
 import com.tourly.core.api.dto.booking.BookingResponseDto
+import com.tourly.core.config.Constants
 import com.tourly.core.data.entity.BookingEntity
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.data.repository.BookingRepository
@@ -27,7 +28,6 @@ class BookingService(
 
     @Transactional
     fun bookTour(userEmail: String, request: BookTourRequestDto): BookingResponseDto {
-        // Find user
         val user = userRepository.findByEmail(userEmail)
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
 
@@ -37,7 +37,7 @@ class BookingService(
         }
 
         // Check for double booking
-        if (bookingRepository.existsByUserIdAndTourIdAndStatus(user.id!!, request.tourId, "CONFIRMED")) {
+        if (bookingRepository.existsByUserIdAndTourIdAndStatus(user.id!!, request.tourId, Constants.BookingStatus.CONFIRMED)) {
             throw APIException(ErrorCode.CONFLICT, "You've already booked this tour")
         }
 
@@ -67,13 +67,11 @@ class BookingService(
         tour.availableSpots -= request.numberOfParticipants
         tourRepository.save(tour)
 
-        // Create booking
         val booking = BookingEntity(
             user = user,
             tour = tour,
             numberOfParticipants = request.numberOfParticipants
         )
-
         val savedBooking = bookingRepository.save(booking)
 
         // Notify the guide
@@ -120,7 +118,7 @@ class BookingService(
             throw APIException(ErrorCode.FORBIDDEN, "You can only cancel your own bookings")
         }
 
-        if (booking.status == "CANCELLED") {
+        if (booking.status == Constants.BookingStatus.CANCELLED) {
             throw APIException(ErrorCode.BAD_REQUEST, "Booking is already cancelled")
         }
 
@@ -130,7 +128,7 @@ class BookingService(
         tourRepository.save(tour)
 
         // Update booking status
-        booking.status = "CANCELLED"
+        booking.status = Constants.BookingStatus.CANCELLED
         bookingRepository.save(booking)
 
         // Notify the user (traveler)
@@ -157,7 +155,7 @@ class BookingService(
         val booking = bookingRepository.findById(bookingId).orElseThrow {
             APIException(ErrorCode.RESOURCE_NOT_FOUND, "Booking not found")
         }
-        booking.status = "COMPLETED"
+        booking.status = Constants.BookingStatus.COMPLETED
         bookingRepository.save(booking)
     }
 
