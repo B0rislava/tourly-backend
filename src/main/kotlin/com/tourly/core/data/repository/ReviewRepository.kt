@@ -11,5 +11,5 @@ interface ReviewRepository : JpaRepository<ReviewEntity, Long> {
     fun existsByBookingId(bookingId: Long): Boolean
     fun deleteAllByReviewerId(reviewerId: Long)
     fun deleteAllByGuideId(guideId: Long)
-    fun deleteAllByTourId(tourId: Long)
+    fun deleteAllByTourIdIn(tourIds: List<Long>)
 }
