@@ -131,14 +131,12 @@ class UserService(
             reviewRepository.deleteAllByReviewerId(userId)
 
             // Delete associated data for all tours created by this guide
-            val guideTours = tourRepository.findAllByGuideIdOrderByCreatedAtDesc(userId)
-            guideTours.forEach { tour ->
-                messageRepository.deleteAllByTourId(tour.id)
-                reviewRepository.deleteAllByTourId(tour.id)
-                // Remove tour from all users' saved lists to avoid constraint violation
-                tour.id.let { tourId ->
-                    userRepository.findAll().forEach { it.savedTours.removeIf { t -> t.id == tourId } }
-                }
+            val guideTourIds = tourRepository.findAllByGuideIdOrderByCreatedAtDesc(userId).map { it.id }
+            
+            if (guideTourIds.isNotEmpty()) {
+                messageRepository.deleteAllByTourIdIn(guideTourIds)
+                reviewRepository.deleteAllByTourIdIn(guideTourIds)
+                userRepository.deleteSavedToursByTourIds(guideTourIds)
             }
 
             // Delete all bookings for guide's tours

@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository
 interface MessageRepository : JpaRepository<MessageEntity, Long> {
     fun findByTourIdOrderByTimestampAsc(tourId: Long): List<MessageEntity>
     fun deleteAllBySenderId(senderId: Long)
-    fun deleteAllByTourId(tourId: Long)
+    fun deleteAllByTourIdIn(tourIds: List<Long>)
 }
