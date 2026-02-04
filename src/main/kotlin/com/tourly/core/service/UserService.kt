@@ -12,6 +12,10 @@ import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
 import com.tourly.core.data.mapper.UserMapper
 import com.tourly.core.data.repository.FollowRepository
+import com.tourly.core.data.repository.MessageRepository
+import com.tourly.core.data.repository.NotificationRepository
+import com.tourly.core.data.repository.ReviewRepository
+import com.tourly.core.data.repository.VerificationTokenRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -27,6 +31,10 @@ class UserService(
     private val bookingRepository: BookingRepository,
     private val tourRepository: TourRepository,
     private val followRepository: FollowRepository,
+    private val messageRepository: MessageRepository,
+    private val reviewRepository: ReviewRepository,
+    private val notificationRepository: NotificationRepository,
+    private val verificationTokenRepository: VerificationTokenRepository,
     private val notificationService: NotificationService
 ) {
 
@@ -99,23 +107,48 @@ class UserService(
     fun deleteUser(userId: Long) {
         val user = findUser(userId)
         
-        // 1. Delete Refresh Tokens
+        // 1. Delete Tokens
         refreshTokenRepository.deleteAllByUserId(userId)
+        verificationTokenRepository.deleteByUserId(userId)
         
         // 2. Delete Follow Relationships
         followRepository.deleteAllByUserId(userId)
         
-        // 3. Handle Bookings and Tours
+        // 3. Delete Notifications
+        notificationRepository.deleteAllByUserId(userId)
+        
+        // 4. Delete Messages Sent by User
+        messageRepository.deleteAllBySenderId(userId)
+        
+        // 5. Handle Reviews, Bookings and Tours
         if (user.role == UserRole.TRAVELER) {
+            reviewRepository.deleteAllByReviewerId(userId)
             bookingRepository.deleteAllByUserId(userId)
+            // User entity deletion will handle saved_tours user_id side
         } else if (user.role == UserRole.GUIDE) {
-            // Delete bookings for all tours created by this guide
+            // Delete reviews FOR and FROM this guide
+            reviewRepository.deleteAllByGuideId(userId)
+            reviewRepository.deleteAllByReviewerId(userId)
+
+            // Delete associated data for all tours created by this guide
+            val guideTours = tourRepository.findAllByGuideIdOrderByCreatedAtDesc(userId)
+            guideTours.forEach { tour ->
+                messageRepository.deleteAllByTourId(tour.id)
+                reviewRepository.deleteAllByTourId(tour.id)
+                // Remove tour from all users' saved lists to avoid constraint violation
+                tour.id.let { tourId ->
+                    userRepository.findAll().forEach { it.savedTours.removeIf { t -> t.id == tourId } }
+                }
+            }
+
+            // Delete all bookings for guide's tours
             bookingRepository.deleteAllByTourGuideId(userId)
+            
             // Delete the tours themselves
             tourRepository.deleteAllByGuideId(userId)
         }
         
-        // 4. Delete the User
+        // 6. Delete the User
         userRepository.delete(user)
     }
 
