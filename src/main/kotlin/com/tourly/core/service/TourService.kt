@@ -69,7 +69,7 @@ class TourService(
                     user = follower,
                     title = "New Tour from ${guide.firstName}",
                     message = "${guide.firstName} ${guide.lastName}|${savedTour.title}",
-                    type = "NEW_TOUR",
+                    type = Constants.NotificationType.NEW_TOUR,
                     relatedId = savedTour.id
                 )
             }

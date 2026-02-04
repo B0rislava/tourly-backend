@@ -42,7 +42,6 @@ class CloudinaryService(
         }
 
         return uploadResult["secure_url"] as String
-
     }
 
     private fun validateFile(file: MultipartFile) {
@@ -54,7 +53,5 @@ class CloudinaryService(
             throw IllegalArgumentException("Only image files are allowed")
         }
 
-        // 3. Optional: Validate extension based on content type/filename if strictly required
-        // complying with "only image MIME types" rule above should be sufficient for now
     }
 }

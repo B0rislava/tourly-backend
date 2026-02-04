@@ -23,9 +23,15 @@ object Constants {
     object BookingStatus {
         const val CONFIRMED = "CONFIRMED"
         const val CANCELLED = "CANCELLED"
+        const val COMPLETED = "COMPLETED"
     }
     
     object NotificationType {
         const val TOUR_CANCELLED = "TOUR_CANCELLED"
+        const val NEW_BOOKING = "NEW_BOOKING"
+        const val BOOKING_CANCELLED_TRAVELER = "BOOKING_CANCELLED_TRAVELER"
+        const val BOOKING_CANCELLED_GUIDE = "BOOKING_CANCELLED_GUIDE"
+        const val FOLLOW = "FOLLOW"
+        const val NEW_TOUR = "NEW_TOUR"
     }
 }
