@@ -167,7 +167,7 @@ class UserService(
             user = userToFollow,
             title = "New Follower",
             message = "${follower.firstName} ${follower.lastName}",
-            type = "FOLLOW",
+            type = Constants.NotificationType.FOLLOW,
             relatedId = follower.id
         )
     }

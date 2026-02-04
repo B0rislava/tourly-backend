@@ -79,7 +79,7 @@ class BookingService(
             user = tour.guide,
             title = "New Booking",
             message = "${user.firstName} ${user.lastName}|${request.numberOfParticipants}|${tour.title}",
-            type = "NEW_BOOKING",
+            type = Constants.NotificationType.NEW_BOOKING,
             relatedId = tour.id
         )
 
@@ -136,7 +136,7 @@ class BookingService(
             user = booking.user,
             title = "Booking Cancelled",
             message = tour.title,
-            type = "BOOKING_CANCELLED_TRAVELER",
+            type = Constants.NotificationType.BOOKING_CANCELLED_TRAVELER,
             relatedId = tour.id
         )
 
@@ -145,7 +145,7 @@ class BookingService(
             user = tour.guide,
             title = "Booking Cancelled",
             message = "${user.firstName} ${user.lastName}|${tour.title}",
-            type = "BOOKING_CANCELLED_GUIDE",
+            type = Constants.NotificationType.BOOKING_CANCELLED_GUIDE,
             relatedId = tour.id
         )
     }
