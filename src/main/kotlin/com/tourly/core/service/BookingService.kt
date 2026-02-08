@@ -4,6 +4,7 @@ import com.tourly.core.api.dto.booking.BookTourRequestDto
 import com.tourly.core.api.dto.booking.BookingResponseDto
 import com.tourly.core.config.Constants
 import com.tourly.core.data.entity.BookingEntity
+import com.tourly.core.data.entity.TourEntity
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.data.repository.BookingRepository
 import com.tourly.core.data.repository.ReviewRepository
@@ -13,6 +14,7 @@ import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -51,6 +53,28 @@ class BookingService(
             throw APIException(ErrorCode.BAD_REQUEST, "Tour is not available for booking")
         }
 
+        // Validate tour has valid date/time for booking
+        if (tour.scheduledDate == null || tour.startTime == null) {
+             throw APIException(ErrorCode.BAD_REQUEST, "Tour does not have a scheduled date or time")
+        }
+
+        val userId = user.id ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is missing")
+
+        // Check for time overlap with existing bookings
+        val userBookings = bookingRepository.findAllByUserIdOrderByBookingDateDesc(userId)
+        val conflictingBooking = userBookings.find { existingBooking ->
+            existingBooking.status == Constants.BookingStatus.CONFIRMED &&
+            existingBooking.tour.id != tour.id &&
+            doToursOverlap(tour, existingBooking.tour)
+        }
+
+        if (conflictingBooking != null) {
+            throw APIException(
+                ErrorCode.CONFLICT, 
+                "This tour overlaps with your existing booking: '${conflictingBooking.tour.title}'"
+            )
+        }
+
         // Check if enough spots are available
         if (tour.availableSpots <= 0) {
             throw APIException(ErrorCode.BAD_REQUEST, "No available spots for this tour")
@@ -84,6 +108,34 @@ class BookingService(
         )
 
         return mapToResponseDto(savedBooking)
+    }
+
+    private fun doToursOverlap(tour1: TourEntity, tour2: TourEntity): Boolean {
+        if (tour1.scheduledDate == null || tour1.startTime == null ||
+            tour2.scheduledDate == null || tour2.startTime == null) {
+            return false
+        }
+
+        val start1 = LocalDateTime.of(tour1.scheduledDate, tour1.startTime)
+        val end1 = calculateEndDateTime(start1, tour1.duration)
+        
+        val start2 = LocalDateTime.of(tour2.scheduledDate, tour2.startTime)
+        val end2 = calculateEndDateTime(start2, tour2.duration)
+
+        // Overlap logic: Start1 < End2 && Start2 < End1
+        return start1.isBefore(end2) && start2.isBefore(end1)
+    }
+
+    private fun calculateEndDateTime(startDateTime: LocalDateTime, duration: String): LocalDateTime {
+        // Duration format expected: HH:mm
+        return try {
+            val parts = duration.split(":")
+            val hours = parts[0].toLong()
+            val minutes = parts[1].toLong()
+            startDateTime.plusHours(hours).plusMinutes(minutes)
+        } catch (e: Exception) {
+             startDateTime.plusHours(1)
+        }
     }
 
     @Transactional(readOnly = true)
