@@ -44,6 +44,8 @@ class TourService(
         // Fetch tags if provided
         val tags = fetchTags(request.tagIds)
 
+        validateScheduledTime(request.scheduledDate, request.startTime)
+
         // First, create and save the tour without image to get the ID
         val tour = TourMapper.toEntity(guide, request, tags)
 
@@ -175,6 +177,8 @@ class TourService(
             )
         }
 
+        validateScheduledTime(request.scheduledDate, request.startTime)
+
         TourMapper.updateEntity(tour, request, tags)
 
         if (image != null) {
@@ -261,5 +265,14 @@ class TourService(
             throw APIException(ErrorCode.BAD_REQUEST, "One or more tag IDs are invalid")
         }
         return foundTags.toMutableSet()
+    }
+
+    private fun validateScheduledTime(date: LocalDate?, time: java.time.LocalTime?) {
+        if (date != null && time != null) {
+            val scheduledDateTime = java.time.LocalDateTime.of(date, time)
+            if (scheduledDateTime.isBefore(java.time.LocalDateTime.now())) {
+                throw APIException(ErrorCode.BAD_REQUEST, "Scheduled time cannot be in the past")
+            }
+        }
     }
 }
