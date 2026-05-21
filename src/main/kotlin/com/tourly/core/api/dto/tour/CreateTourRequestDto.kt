@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -39,7 +40,8 @@ data class CreateTourRequestDto(
     @field:FutureOrPresent(message = "Scheduled date must be in the present or future")
     val scheduledDate: LocalDate?,
 
-    val startTime: LocalTime?,
+    @field:NotNull(message = "Start time is required")
+    var startTime: LocalTime?,
 
     val tagIds: List<Long>? = null,
 
