@@ -268,10 +268,16 @@ class TourService(
     }
 
     private fun validateScheduledTime(date: LocalDate?, time: java.time.LocalTime?) {
-        if (date != null && time != null) {
-            val scheduledDateTime = java.time.LocalDateTime.of(date, time)
-            if (scheduledDateTime.isBefore(java.time.LocalDateTime.now())) {
-                throw APIException(ErrorCode.BAD_REQUEST, "Scheduled time cannot be in the past")
+        if (date != null) {
+            if (time != null) {
+                val scheduledDateTime = java.time.LocalDateTime.of(date, time)
+                if (scheduledDateTime.isBefore(java.time.LocalDateTime.now())) {
+                    throw APIException(ErrorCode.BAD_REQUEST, "Scheduled time cannot be in the past")
+                }
+            } else {
+                if (date.isBefore(LocalDate.now())) {
+                    throw APIException(ErrorCode.BAD_REQUEST, "Scheduled date cannot be in the past")
+                }
             }
         }
     }

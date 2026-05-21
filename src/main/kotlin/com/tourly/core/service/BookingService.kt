@@ -58,6 +58,11 @@ class BookingService(
              throw APIException(ErrorCode.BAD_REQUEST, "Tour does not have a scheduled date or time")
         }
 
+        val startDateTime = LocalDateTime.of(tour.scheduledDate, tour.startTime)
+        if (startDateTime.isBefore(LocalDateTime.now())) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Cannot book a tour that has already passed")
+        }
+
         val userId = user.id ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "User ID is missing")
 
         // Check for time overlap with existing bookings
