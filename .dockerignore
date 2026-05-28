@@ -1,0 +1,15 @@
+.gradle
+build
+bin
+out
+.idea
+.kotlin
+.env
+.env.example
+*.log
+.git
+.gitignore
+Dockerfile
+.dockerignore
+HELP.md
+README.md

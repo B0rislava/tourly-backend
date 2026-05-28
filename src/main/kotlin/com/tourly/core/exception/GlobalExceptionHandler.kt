@@ -2,12 +2,24 @@ package com.tourly.core.exception
 
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
+    @ExceptionHandler(AuthorizationDeniedException::class)
+    fun handleAuthorizationDenied(ex: AuthorizationDeniedException): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.FORBIDDEN
+        val response = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = "You don't have permission to perform this action. Check your user role."
+        )
+        return ResponseEntity.status(errorCode.httpStatus).body(response)
+    }
 
     @ExceptionHandler(APIException::class)
     fun handleAPIException(ex: APIException): ResponseEntity<ErrorResponse> {
@@ -58,7 +70,6 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {
-        // In a real app, use a logger here (e.g., Slf4j)
         ex.printStackTrace()
         
         val errorCode = ErrorCode.INTERNAL_SERVER_ERROR

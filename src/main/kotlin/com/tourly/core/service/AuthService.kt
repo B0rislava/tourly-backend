@@ -2,25 +2,46 @@ package com.tourly.core.service
 
 import com.tourly.core.api.dto.auth.LoginRequestDto
 import com.tourly.core.api.dto.auth.LoginResponseDto
+import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import com.tourly.core.api.dto.auth.RegisterRequestDto
 import com.tourly.core.api.dto.auth.RegisterResponseDto
-import com.tourly.core.api.dto.UserDto
+import com.tourly.core.data.entity.RefreshTokenEntity
 import com.tourly.core.data.entity.UserEntity
+import com.tourly.core.data.entity.VerificationTokenEntity
+import com.tourly.core.data.repository.RefreshTokenRepository
 import com.tourly.core.data.repository.UserRepository
+import com.tourly.core.data.repository.VerificationTokenRepository
 import com.tourly.core.exception.APIException
 import com.tourly.core.exception.ErrorCode
+import com.tourly.core.data.mapper.UserMapper
+import com.tourly.core.config.Constants
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.security.JWTUtil
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
+import java.util.Collections
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val verificationTokenRepository: VerificationTokenRepository,
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
-    private val jwtUtil: JWTUtil
+    private val jwtUtil: JWTUtil,
+    private val emailService: EmailService,
+    @Value($$"${google.clientId}")
+    private val googleClientId: String
 ) {
 
     fun register(request: RegisterRequestDto): RegisterResponseDto {
@@ -53,15 +74,48 @@ class AuthService(
         )
 
         // Save to database
-        userRepository.save(user)
+        val savedUser = userRepository.save(user)
 
+        // Generate verification code (6 digits)
+        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
+        val verificationTokenEntity = VerificationTokenEntity(
+            token = verificationCode,
+            userId = savedUser.id!!,
+            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+        )
+        verificationTokenRepository.save(verificationTokenEntity)
+
+        // Send verification email
+        try {
+            emailService.sendVerificationCode(savedUser.email, verificationCode)
+        } catch (e: Exception) {
+            println("Failed to send verification email: ${e.message}")
+        }
+
+        // No token returned on register
         return RegisterResponseDto(
-            message = "User registered successfully",
-            email = user.email
+            token = null,
+            refreshToken = null,
+            user = UserMapper.toDto(user)
         )
     }
 
     fun login(request: LoginRequestDto): LoginResponseDto {
+        // 1. Check if user exists first to provide better feedback
+        val user = userRepository.findByEmail(request.email)
+            ?: throw APIException(
+                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
+                description = "The account you entered does not exist"
+            )
+
+        // 2. Attempt authentication
+        if (!user.isVerified) {
+            throw APIException(
+                errorCode = ErrorCode.EMAIL_NOT_VERIFIED,
+                description = "Please verify your email address before logging in."
+            )
+        }
+
         try {
             authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken(
@@ -69,36 +123,177 @@ class AuthService(
                     request.password
                 )
             )
-        } catch (e: Exception) {
+        } catch (e: BadCredentialsException) {
             throw APIException(
                 errorCode = ErrorCode.UNAUTHORIZED,
-                description = "Invalid email or password"
+                description = "Invalid password"
             )
         }
 
-        // Load user details from database
-        val user = userRepository.findByEmail(request.email)
-            ?: throw APIException(
-                errorCode = ErrorCode.RESOURCE_NOT_FOUND,
-                description = "User not found with email: ${request.email}"
-            )
-
-        // Generate JWT token with username and roles
-        val token = jwtUtil.generateToken(
+        val token = jwtUtil.generateAccessToken(
             username = user.email,
             roles = listOf(user.role.name)
         )
+        
+        val refreshToken = createAndSaveRefreshToken(user.id!!, user.email)
 
         return LoginResponseDto(
             token = token,
-            user = UserDto(
-                id = user.id,
-                email = user.email,
-                firstName = user.firstName,
-                lastName = user.lastName,
-                role = user.role,
-                profilePictureUrl = user.profilePictureUrl
+            refreshToken = refreshToken,
+            user = UserMapper.toDto(user)
+        )
+    }
+
+    @Transactional
+    fun refreshAccessToken(refreshToken: String): RefreshTokenResponseDto {
+        // Validate token format and expiration
+        if (!jwtUtil.isRefreshTokenValid(refreshToken)) {
+            throw APIException(ErrorCode.UNAUTHORIZED, "Invalid refresh token")
+        }
+
+        // Check if token exists in DB
+        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+            ?: throw APIException(ErrorCode.UNAUTHORIZED, "Refresh token not found or revoked")
+            
+        // Setup for rotation: cleanup old token
+        refreshTokenRepository.delete(tokenEntity)
+        
+        // Check DB expiration (double check)
+        if (tokenEntity.expiresAt.isBefore(LocalDateTime.now())) {
+            throw APIException(ErrorCode.UNAUTHORIZED, "Refresh token expired")
+        }
+
+        // Get user
+        val user = userRepository.findById(tokenEntity.userId).orElseThrow {
+            APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+        }
+
+        // Generate new tokens
+        val newAccessToken = jwtUtil.generateAccessToken(user.email, listOf(user.role.name))
+        val newRefreshToken = createAndSaveRefreshToken(user.id!!, user.email)
+
+        return RefreshTokenResponseDto(
+            accessToken = newAccessToken,
+            refreshToken = newRefreshToken
+        )
+    }
+
+    fun createAndSaveRefreshToken(userId: Long, email: String): String {
+        val refreshToken = jwtUtil.generateRefreshToken(email)
+        val refreshTokenEntity = RefreshTokenEntity(
+            userId = userId,
+            token = refreshToken,
+            expiresAt = LocalDateTime.now().plusNanos(jwtUtil.refreshTokenExpirationMs * 1_000_000)
+        )
+        refreshTokenRepository.save(refreshTokenEntity)
+        return refreshToken
+    }
+
+    @Transactional
+    fun verifyEmailByCode(email: String, code: String): LoginResponseDto {
+        val user = userRepository.findByEmail(email) 
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+        
+        val tokenEntity = verificationTokenRepository.findByToken(code)
+            ?: throw APIException(ErrorCode.BAD_REQUEST, "Invalid or expired verification code.")
+
+        if (tokenEntity.userId != user.id) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Invalid verification code.")
+        }
+
+        if (tokenEntity.expiresAt.isBefore(LocalDateTime.now())) {
+            verificationTokenRepository.delete(tokenEntity)
+            throw APIException(ErrorCode.BAD_REQUEST, "Verification code has expired.")
+        }
+
+        user.isVerified = true
+        userRepository.save(user)
+        verificationTokenRepository.delete(tokenEntity)
+
+        // Generate tokens ONLY after successful verification
+        val accessToken = jwtUtil.generateAccessToken(user.email, listOf(user.role.name))
+        val refreshToken = createAndSaveRefreshToken(user.id!!, user.email)
+
+        return LoginResponseDto(
+            token = accessToken,
+            refreshToken = refreshToken,
+            user = UserMapper.toDto(user)
+        )
+    }
+
+    @Transactional
+    fun resendVerificationCode(email: String) {
+        val user = userRepository.findByEmail(email)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
+
+        // Rate limiting: Check if a code was sent recently (e.g., within the last 60 seconds)
+        val lastToken = verificationTokenRepository.findTopByUserIdOrderByExpiresAtDesc(user.id!!)
+        if (lastToken != null) {
+            val sentAt = lastToken.expiresAt.minusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS))) {
+                throw APIException(ErrorCode.BAD_REQUEST, "Please wait ${Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS} seconds before requesting a new code.")
+            }
+        }
+
+        // 1. Delete any existing codes for this user
+        verificationTokenRepository.deleteByUserId(user.id!!)
+
+        // 2. Generate new 6-digit code
+        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
+        val verificationTokenEntity = VerificationTokenEntity(
+            token = verificationCode,
+            userId = user.id!!,
+            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+        )
+        verificationTokenRepository.save(verificationTokenEntity)
+
+        // 3. Send new verification email
+        try {
+            emailService.sendVerificationCode(user.email, verificationCode)
+        } catch (e: Exception) {
+            println("Failed to send verification email: ${e.message}")
+            throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send email")
+        }
+    }
+
+    fun googleLogin(idToken: String, role: UserRole? = null): LoginResponseDto {
+        val verifier = GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory())
+            .setAudience(Collections.singletonList(googleClientId))
+            .build()
+
+        val idTokenObj: GoogleIdToken = verifier.verify(idToken)
+            ?: throw APIException(ErrorCode.UNAUTHORIZED, "Invalid Google ID Token")
+
+        val payload = idTokenObj.payload
+        val email = payload.email
+
+        var user = userRepository.findByEmail(email)
+
+        if (user == null) {
+            if (role == null) {
+                throw APIException(ErrorCode.GOOGLE_USER_NOT_FOUND, "Google user not registered")
+            }
+            // Auto-register if user doesn't exist and role is provided
+            user = UserEntity(
+                id = null,
+                email = email,
+                firstName = payload["given_name"] as String? ?: "",
+                lastName = payload["family_name"] as String? ?: "",
+                password = "", // No password for Google users
+                role = role,
+                isVerified = true, // Google emails are verified
+                profilePictureUrl = payload["picture"] as String?
             )
+            user = userRepository.save(user)
+        }
+
+        val token = jwtUtil.generateAccessToken(user.email, listOf(user.role.name))
+        val refreshToken = createAndSaveRefreshToken(user.id!!, user.email)
+
+        return LoginResponseDto(
+            token = token,
+            refreshToken = refreshToken,
+            user = UserMapper.toDto(user)
         )
     }
 }

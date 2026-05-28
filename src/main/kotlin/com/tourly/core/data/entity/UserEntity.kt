@@ -1,14 +1,7 @@
 package com.tourly.core.data.entity
 
 import com.tourly.core.data.enumeration.UserRole
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "users")
@@ -34,5 +27,34 @@ data class UserEntity(
     val role: UserRole,
 
     @Column(name = "profile_picture_url")
-    var profilePictureUrl: String?
+    var profilePictureUrl: String?,
+
+    @Column(name = "bio", length = 1000)
+    var bio: String? = null,
+
+    @Column(name = "rating")
+    var rating: Double? = 0.0,
+
+    @Column(name = "reviews_count")
+    var reviewsCount: Int? = 0,
+
+    @Column(name = "follower_count")
+    var followerCount: Int? = 0,
+
+    @Column(name = "certifications", length = 1000)
+    var certifications: String? = null,
+
+    @Column(name = "tours_completed")
+    var toursCompleted: Int? = 0,
+
+    @Column(name = "is_verified", nullable = false)
+    var isVerified: Boolean = false,
+
+    @ManyToMany
+    @JoinTable(
+        name = "saved_tours",
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "tour_id")]
+    )
+    val savedTours: MutableSet<TourEntity> = mutableSetOf()
 )

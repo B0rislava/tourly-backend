@@ -1,6 +1,7 @@
 spring:
   application:
     name: tourly-api
+
   # Database
   datasource:
     url: jdbc:postgresql://tourly-db-tourly.f.aivencloud.com:26657/tourly-db?sslmode=require
@@ -11,37 +12,65 @@ spring:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       minimum-idle: 2
       idle-timeout: 30000
-      max-lifetime: 1800000
+      max-lifetime: 600000
       connection-timeout: 30000
+
   # JPA Configuration
   jpa:
     database: POSTGRESQL
     show-sql: true
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         jdbc:
           lob:
             non_contextual_creation: true
 
+  # Mail Configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      file-size-threshold: 2KB
+
+app:
+  allowed-origins: ${ALLOWED_ORIGINS:*}
+
 jwt:
   secret: ${JWT_SECRET}
-  expirationMs: ${JWT_EXPIRATION}
+  accessTokenExpirationMs: ${JWT_ACCESS_TOKEN_EXPIRATION:900000}
+  refreshTokenExpirationMs: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
 
 logging:
   level:
-    "com.tourly.core": ${LOG_LEVEL:INFO}
+    "com.tourly.core": ${LOG_LEVEL:DEBUG}
     root: ${LOG_LEVEL:INFO}
 
 server:
-  # servlet:
-  #   context-path: /core/${API_VERSION:v1}  # Commented out for simpler development
   port: ${APP_PORT:8080}
+  tomcat:
+    max-http-form-post-size: 10MB
 
 cloudinary:
   cloud_name: ${CLOUDINARY_NAME}
   api_key: ${CLOUDINARY_KEY}
   api_secret: ${CLOUDINARY_SECRET}
+
+google:
+  clientId: ${GOOGLE_CLIENT_ID}
