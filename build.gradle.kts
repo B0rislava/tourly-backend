@@ -46,6 +46,19 @@ dependencies {
 	// Cloudinary
 	implementation("com.cloudinary:cloudinary-http5:2.0.0")
 
+	// WebSocket
+	implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+	// Mail & Thymeleaf
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+	// Swagger/OpenAPI
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
+
+	// Google API Client for Auth
+	implementation("com.google.api-client:google-api-client:2.7.0")
+
 	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-webmvc-test")

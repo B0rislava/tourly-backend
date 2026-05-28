@@ -6,6 +6,7 @@ import com.tourly.core.api.dto.UserDto
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.security.CustomUserDetails
 import com.tourly.core.security.JWTUtil
+import com.tourly.core.service.AuthService
 import com.tourly.core.service.UserService
 import io.mockk.every
 import org.junit.jupiter.api.Test
@@ -59,6 +60,9 @@ class UserControllerIntegrationTest {
 
     @MockkBean
     private lateinit var jwtUtil: JWTUtil
+
+    @MockkBean
+    private lateinit var authService: AuthService
 
     @MockkBean
     @Suppress("unused")
@@ -134,7 +138,8 @@ class UserControllerIntegrationTest {
         )
 
         every { userService.updateProfile(1L, any()) } returns updatedUserDto
-        every { jwtUtil.generateToken("traveler@example.com", listOf("TRAVELER")) } returns "new.jwt.token"
+        every { jwtUtil.generateAccessToken("traveler@example.com", listOf("TRAVELER")) } returns "new.jwt.token"
+        every { authService.createAndSaveRefreshToken(1L, "traveler@example.com") } returns "new.jwt.refresh.token"
 
         mockMvc.perform(
             put("/api/users/me")

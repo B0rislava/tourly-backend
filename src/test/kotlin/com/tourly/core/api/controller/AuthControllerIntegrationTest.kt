@@ -44,6 +44,7 @@ class AuthControllerIntegrationTest {
         val request = LoginRequestDto(email = "test@example.com", password = "password")
         val response = LoginResponseDto(
             token = "jwt.token.here",
+            refreshToken = "jwt.refresh.token.here",
             user = UserDto(
                 id = 1,
                 email = "test@example.com",
