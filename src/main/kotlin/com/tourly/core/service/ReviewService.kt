@@ -68,7 +68,7 @@ class ReviewService(
         val count = guideReviews.size
         val avg = if (count > 0) guideReviews.map { it.guideRating }.average() else 0.0
         
-        val guide = userRepository.findById(guideId).orElseThrow { 
+        val guide = userRepository.findByIdForUpdate(guideId).orElseThrow { 
             APIException(ErrorCode.RESOURCE_NOT_FOUND, "Guide not found") 
         }
         guide.rating = avg
@@ -81,7 +81,7 @@ class ReviewService(
         val count = tourReviews.size
         val avg = if (count > 0) tourReviews.map { it.tourRating }.average() else 0.0
 
-        val tour = tourRepository.findById(tourId).orElseThrow { 
+        val tour = tourRepository.findByIdForUpdate(tourId).orElseThrow { 
             APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found") 
         }
         tour.rating = avg

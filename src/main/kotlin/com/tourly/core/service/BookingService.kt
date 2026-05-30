@@ -43,8 +43,8 @@ class BookingService(
             throw APIException(ErrorCode.CONFLICT, "You've already booked this tour")
         }
 
-        // Find tour
-        val tour = tourRepository.findById(request.tourId).orElseThrow {
+        // Find tour and lock it for update
+        val tour = tourRepository.findByIdForUpdate(request.tourId).orElseThrow {
             APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found")
         }
 
@@ -179,8 +179,10 @@ class BookingService(
             throw APIException(ErrorCode.BAD_REQUEST, "Booking is already cancelled")
         }
 
-        // Return spots to the tour
-        val tour = booking.tour
+        // Return spots to the tour with lock to prevent race conditions
+        val tour = tourRepository.findByIdForUpdate(booking.tour.id).orElseThrow {
+            APIException(ErrorCode.RESOURCE_NOT_FOUND, "Tour not found")
+        }
         tour.availableSpots += booking.numberOfParticipants
         tourRepository.save(tour)
 
