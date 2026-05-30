@@ -37,6 +37,8 @@ dependencies {
 
 	// Database
 	runtimeOnly("org.postgresql:postgresql")
+	implementation("org.flywaydb:flyway-core")
+	implementation("org.flywaydb:flyway-database-postgresql")
 
 	// JWT
 	implementation("io.jsonwebtoken:jjwt-api:0.11.5")

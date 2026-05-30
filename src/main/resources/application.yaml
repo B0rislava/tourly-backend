@@ -18,16 +18,22 @@ spring:
   # JPA Configuration
   jpa:
     database: POSTGRESQL
-    show-sql: true
+    show-sql: false
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
         jdbc:
           lob:
             non_contextual_creation: true
+
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: "1"
 
   # Mail Configuration
   mail:

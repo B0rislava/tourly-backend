@@ -151,8 +151,10 @@ class AuthService(
             throw APIException(ErrorCode.UNAUTHORIZED, "Invalid refresh token")
         }
 
+        val hashedToken = hashToken(refreshToken)
+
         // Check if token exists in DB
-        val tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+        val tokenEntity = refreshTokenRepository.findByToken(hashedToken)
             ?: throw APIException(ErrorCode.UNAUTHORIZED, "Refresh token not found or revoked")
             
         // Setup for rotation: cleanup old token
@@ -182,11 +184,18 @@ class AuthService(
         val refreshToken = jwtUtil.generateRefreshToken(email)
         val refreshTokenEntity = RefreshTokenEntity(
             userId = userId,
-            token = refreshToken,
+            token = hashToken(refreshToken),
             expiresAt = LocalDateTime.now().plusNanos(jwtUtil.refreshTokenExpirationMs * 1_000_000)
         )
         refreshTokenRepository.save(refreshTokenEntity)
         return refreshToken
+    }
+
+    private fun hashToken(token: String): String {
+        val bytes = java.security.MessageDigest
+            .getInstance("SHA-256")
+            .digest(token.toByteArray(Charsets.UTF_8))
+        return bytes.joinToString("") { "%02x".format(it) }
     }
 
     @Transactional
