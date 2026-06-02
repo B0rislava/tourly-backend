@@ -13,19 +13,38 @@ class EmailService(
 ) {
 
     fun sendVerificationCode(to: String, code: String) {
-        val subject = "Your Tourly Verification Code"
-        
-        // Prepare Thymeleaf context
+        sendEmail(
+            to = to,
+            subject = "Your Tourly Verification Code",
+            templateName = "email-verification",
+            variables = mapOf("code" to code)
+        )
+    }
+
+    fun sendPasswordResetCode(to: String, code: String) {
+        sendEmail(
+            to = to,
+            subject = "Your Tourly Password Reset Code",
+            templateName = "email-password-reset",
+            variables = mapOf("code" to code)
+        )
+    }
+
+    private fun sendEmail(
+        to: String,
+        subject: String,
+        templateName: String,
+        variables: Map<String, Any>
+    ) {
         val context = Context().apply {
-            setVariable("code", code)
+            variables.forEach { (key, value) -> setVariable(key, value) }
         }
-        
-        // Render HTML content using the template
-        val htmlContent = templateEngine.process("email-verification", context)
+
+        val htmlContent = templateEngine.process(templateName, context)
 
         val mimeMessage = mailSender.createMimeMessage()
         val helper = MimeMessageHelper(mimeMessage, "utf-8")
-        
+
         helper.setText(htmlContent, true)
         helper.setTo(to)
         helper.setSubject(subject)
@@ -34,3 +53,4 @@ class EmailService(
         mailSender.send(mimeMessage)
     }
 }
+

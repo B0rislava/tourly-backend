@@ -76,16 +76,8 @@ class AuthService(
         // Save to database
         val savedUser = userRepository.save(user)
 
-        // Generate verification code (6 digits)
-        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
-        val verificationTokenEntity = VerificationTokenEntity(
-            token = verificationCode,
-            userId = savedUser.id!!,
-            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
-        )
-        verificationTokenRepository.save(verificationTokenEntity)
-
-        // Send verification email
+        // Generate verification code and send email
+        val verificationCode = generateAndSaveOtp(savedUser.id!!)
         try {
             emailService.sendVerificationCode(savedUser.email, verificationCode)
         } catch (e: Exception) {
@@ -236,27 +228,13 @@ class AuthService(
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found")
 
         // Rate limiting: Check if a code was sent recently (e.g., within the last 60 seconds)
-        val lastToken = verificationTokenRepository.findTopByUserIdOrderByExpiresAtDesc(user.id!!)
-        if (lastToken != null) {
-            val sentAt = lastToken.expiresAt.minusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
-            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS))) {
-                throw APIException(ErrorCode.BAD_REQUEST, "Please wait ${Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS} seconds before requesting a new code.")
-            }
-        }
+        checkResendRateLimit(user.id!!)
 
         // 1. Delete any existing codes for this user
         verificationTokenRepository.deleteByUserId(user.id!!)
 
-        // 2. Generate new 6-digit code
-        val verificationCode = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
-        val verificationTokenEntity = VerificationTokenEntity(
-            token = verificationCode,
-            userId = user.id!!,
-            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
-        )
-        verificationTokenRepository.save(verificationTokenEntity)
-
-        // 3. Send new verification email
+        // 2. Generate new code and send email
+        val verificationCode = generateAndSaveOtp(user.id!!)
         try {
             emailService.sendVerificationCode(user.email, verificationCode)
         } catch (e: Exception) {
@@ -304,5 +282,102 @@ class AuthService(
             refreshToken = refreshToken,
             user = UserMapper.toDto(user)
         )
+    }
+
+    @Transactional
+    fun sendPasswordResetCode(email: String) {
+        val user = userRepository.findByEmail(email)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "No account found with that email address.")
+
+        // Rate-limit
+        checkResendRateLimit(user.id!!)
+
+        // Delete any existing tokens for this user and generate a fresh OTP
+        verificationTokenRepository.deleteByUserId(user.id!!)
+        val resetCode = generateAndSaveOtp(user.id!!)
+        try {
+            emailService.sendPasswordResetCode(user.email, resetCode)
+        } catch (e: Exception) {
+            throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Failed to send password reset email.")
+        }
+    }
+
+    fun verifyPasswordResetCode(email: String, code: String) {
+        val user = userRepository.findByEmail(email)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found.")
+        // Token is intentionally NOT deleted here so it can be used in the subsequent resetPassword call
+        validateResetToken(user.id!!, code)
+    }
+
+    @Transactional
+    fun resetPassword(email: String, resetCode: String, newPassword: String) {
+        val user = userRepository.findByEmail(email)
+            ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "User not found.")
+
+        if (newPassword.length < 6) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Password must be at least 6 characters.")
+        }
+
+        if (newPassword.none { it.isDigit() }) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Password must contain at least one digit.")
+        }
+
+        val tokenEntity = validateResetToken(user.id!!, resetCode)
+
+        // Update password and clean up token
+        user.password = passwordEncoder.encode(newPassword)
+            ?: throw APIException(ErrorCode.INTERNAL_SERVER_ERROR, "Password encoding failed")
+        userRepository.save(user)
+        verificationTokenRepository.delete(tokenEntity)
+    }
+
+
+    /**
+     * Throws [APIException] if a verification/reset code was already sent for [userId]
+     * within the configured rate-limit window.
+     */
+    private fun checkResendRateLimit(userId: Long) {
+        val lastToken = verificationTokenRepository.findTopByUserIdOrderByExpiresAtDesc(userId)
+        if (lastToken != null) {
+            val sentAt = lastToken.expiresAt.minusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+            if (sentAt.isAfter(LocalDateTime.now().minusSeconds(Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS))) {
+                throw APIException(
+                    ErrorCode.BAD_REQUEST,
+                    "Please wait ${Constants.Auth.RESEND_CODE_RATE_LIMIT_SECONDS} seconds before requesting a new code."
+                )
+            }
+        }
+    }
+
+    /** Generates a random 6-digit OTP, persists it, and returns the code string. */
+    private fun generateAndSaveOtp(userId: Long): String {
+        val code = (Constants.Auth.VERIFICATION_CODE_MIN..Constants.Auth.VERIFICATION_CODE_MAX).random().toString()
+        val tokenEntity = VerificationTokenEntity(
+            token = code,
+            userId = userId,
+            expiresAt = LocalDateTime.now().plusMinutes(Constants.Auth.VERIFICATION_TOKEN_EXPIRATION_MINUTES)
+        )
+        verificationTokenRepository.save(tokenEntity)
+        return code
+    }
+
+    /**
+     * Looks up [code] in the token table, verifies it belongs to [userId], and checks it
+     * hasn't expired. Returns the entity so callers can delete it if required.
+     */
+    private fun validateResetToken(userId: Long, code: String): VerificationTokenEntity {
+        val tokenEntity = verificationTokenRepository.findByToken(code)
+            ?: throw APIException(ErrorCode.BAD_REQUEST, "Invalid or expired reset code.")
+
+        if (tokenEntity.userId != userId) {
+            throw APIException(ErrorCode.BAD_REQUEST, "Invalid reset code.")
+        }
+
+        if (tokenEntity.expiresAt.isBefore(LocalDateTime.now())) {
+            verificationTokenRepository.delete(tokenEntity)
+            throw APIException(ErrorCode.BAD_REQUEST, "Reset code has expired.")
+        }
+
+        return tokenEntity
     }
 }

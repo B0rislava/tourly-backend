@@ -6,6 +6,7 @@ import com.tourly.core.api.dto.auth.RefreshTokenRequestDto
 import com.tourly.core.api.dto.auth.RefreshTokenResponseDto
 import com.tourly.core.api.dto.auth.RegisterRequestDto
 import com.tourly.core.api.dto.auth.RegisterResponseDto
+import com.tourly.core.api.dto.auth.ResetPasswordRequestDto
 import com.tourly.core.data.enumeration.UserRole
 import com.tourly.core.service.AuthService
 import io.swagger.v3.oas.annotations.Operation
@@ -73,5 +74,29 @@ class AuthController(
     ): ResponseEntity<LoginResponseDto> {
         val response = authService.googleLogin(idToken, role)
         return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "Forgot password", description = "Sends a 6-digit OTP to the user's email for password reset")
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@RequestParam email: String): ResponseEntity<Unit> {
+        authService.sendPasswordResetCode(email)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Verify reset code", description = "Validates the 6-digit password reset OTP")
+    @PostMapping("/verify-reset-code")
+    fun verifyResetCode(
+        @RequestParam email: String,
+        @RequestParam code: String
+    ): ResponseEntity<Unit> {
+        authService.verifyPasswordResetCode(email, code)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Reset password", description = "Verifies the OTP and updates the user's password")
+    @PostMapping("/reset-password")
+    fun resetPassword(@RequestBody request: ResetPasswordRequestDto): ResponseEntity<Unit> {
+        authService.resetPassword(request.email, request.resetCode, request.newPassword)
+        return ResponseEntity.ok().build()
     }
 }
