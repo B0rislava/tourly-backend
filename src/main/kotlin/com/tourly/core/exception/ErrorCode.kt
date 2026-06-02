@@ -15,5 +15,6 @@ enum class ErrorCode(
     FORBIDDEN("TY-5", "Forbidden", HttpStatus.FORBIDDEN),
     CONFLICT("TY-6", "Conflict", HttpStatus.CONFLICT),
     GOOGLE_USER_NOT_FOUND("TY-7", "Google user not registered", HttpStatus.NOT_FOUND),
-    EMAIL_NOT_VERIFIED("TY-8", "Email not verified", HttpStatus.UNAUTHORIZED)
+    EMAIL_NOT_VERIFIED("TY-8", "Email not verified", HttpStatus.UNAUTHORIZED),
+    GOOGLE_ACCOUNT("TY-9", "This account uses Google Sign-In", HttpStatus.BAD_REQUEST)
 }

@@ -289,6 +289,11 @@ class AuthService(
         val user = userRepository.findByEmail(email)
             ?: throw APIException(ErrorCode.RESOURCE_NOT_FOUND, "No account found with that email address.")
 
+        // Google-registered accounts have no password - reject with a clear message
+        if (user.password.isBlank()) {
+            throw APIException(ErrorCode.GOOGLE_ACCOUNT, "This account uses Google Sign-In. Please log in with Google instead.")
+        }
+
         // Rate-limit
         checkResendRateLimit(user.id!!)
 
