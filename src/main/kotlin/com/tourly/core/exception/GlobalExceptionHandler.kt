@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -42,6 +43,17 @@ class GlobalExceptionHandler {
             message = errorCode.message,
             description = "Validation failed for one or more fields",
             errors = errors
+        )
+        return ResponseEntity.status(errorCode.httpStatus).body(response)
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    fun handleMissingParameter(ex: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.BAD_REQUEST
+        val response = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = "Missing required parameter: ${ex.parameterName}"
         )
         return ResponseEntity.status(errorCode.httpStatus).body(response)
     }
