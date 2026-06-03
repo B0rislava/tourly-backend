@@ -11,7 +11,7 @@
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
 
-[Features](#key-features) • [Setup](#setup--installation) • [API Docs](#api-documentation)
+[Overview](#overview) • [Features](#features) • [Setup](#setup--installation) • [API Docs](#api-documentation)
 
 ---
 
@@ -41,10 +41,17 @@
 </div>
 </div>
 
+---
+
+</div>
+
+## Overview
+
+**Tourly Backend** is a high-performance RESTful API and WebSocket server built with Kotlin and Spring Boot. It serves as the core engine for the Tourly platform, powering everything from secure dual-token authentication (JWT & OAuth2) to complex tour discovery and booking management. Designed with a clean, modular architecture, it leverages PostgreSQL for robust data persistence, Cloudinary for optimized media handling, and Spring WebSockets for low-latency, real-time messaging between guides and travelers.
 
 ---
 
-## Key Features
+## Features
 
 <div align="center">
 <table>
