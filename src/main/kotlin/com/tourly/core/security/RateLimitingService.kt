@@ -15,10 +15,10 @@ class RateLimitingService {
     }
 
     private fun newBucket(): Bucket {
-        // Allow 5 requests per minute
+        // Allow 10 requests per minute
         val limit = Bandwidth.builder()
-            .capacity(5)
-            .refillIntervally(5, Duration.ofMinutes(1))
+            .capacity(10)
+            .refillIntervally(10, Duration.ofMinutes(1))
             .build()
             
         return Bucket.builder()
