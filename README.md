@@ -11,7 +11,7 @@
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
 
-[Features](#key-features) • [Tech Stack](#tech-stack) • [Setup](#setup--installation) • [API Docs](#api-documentation)
+[Features](#key-features) • [Setup](#setup--installation) • [API Docs](#api-documentation)
 
 ---
 
@@ -117,27 +117,6 @@
 </td>
 </tr>
 </table>
-</div>
-
----
-
-## Tech Stack
-
-<div align="center">
-
-| Category | Technology | Version |
-|:--------:|:-----------|:-------:|
-| **Framework** | Spring Boot | 4.0.0 |
-| **Language** | Kotlin | 2.2.21 |
-| **Runtime** | Java (Eclipse Temurin) | 21 |
-| **Build Tool** | Gradle | 9.2.1 |
-| **Database** | PostgreSQL | latest |
-| **Security** | Spring Security + JJWT | 0.11.5 |
-| **API Docs** | Springdoc OpenAPI | 2.8.4 |
-| **Storage** | Cloudinary | 2.0.0 |
-| **Real-time** | Spring WebSockets | - |
-| **Container** | Docker | - |
-
 </div>
 
 ---
