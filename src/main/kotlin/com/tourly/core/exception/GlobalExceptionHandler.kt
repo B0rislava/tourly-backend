@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -54,6 +55,17 @@ class GlobalExceptionHandler {
             code = errorCode.code,
             message = errorCode.message,
             description = "Missing required parameter: ${ex.parameterName}"
+        )
+        return ResponseEntity.status(errorCode.httpStatus).body(response)
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(ex: NoResourceFoundException): ResponseEntity<ErrorResponse> {
+        val errorCode = ErrorCode.RESOURCE_NOT_FOUND
+        val response = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = "The requested endpoint or resource was not found: ${ex.resourcePath}"
         )
         return ResponseEntity.status(errorCode.httpStatus).body(response)
     }
