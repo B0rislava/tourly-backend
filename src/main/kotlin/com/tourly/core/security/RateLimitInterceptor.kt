@@ -1,8 +1,13 @@
 package com.tourly.core.security
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.tourly.core.exception.ErrorCode
+import com.tourly.core.exception.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
 
@@ -10,6 +15,8 @@ import org.springframework.web.servlet.HandlerInterceptor
 class RateLimitInterceptor(
     private val rateLimitingService: RateLimitingService
 ) : HandlerInterceptor {
+
+    private val objectMapper = ObjectMapper().registerModule(JavaTimeModule())
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val ip = getClientIP(request)
@@ -21,9 +28,18 @@ class RateLimitInterceptor(
             return true
         }
 
+        val retryAfterSeconds = probe.nanosToWaitForRefill / 1_000_000_000
+        val errorCode = ErrorCode.RATE_LIMIT_EXCEEDED
+        val errorResponse = ErrorResponse(
+            code = errorCode.code,
+            message = errorCode.message,
+            description = "You have exceeded the request limit. Please try again in $retryAfterSeconds second(s)."
+        )
+
         response.status = HttpStatus.TOO_MANY_REQUESTS.value()
-        response.addHeader("X-Rate-Limit-Retry-After-Seconds", (probe.nanosToWaitForRefill / 1_000_000_000).toString())
-        response.writer.write("Too many requests. Please try again later.")
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.addHeader("X-Rate-Limit-Retry-After-Seconds", retryAfterSeconds.toString())
+        response.writer.write(objectMapper.writeValueAsString(errorResponse))
         return false
     }
 
