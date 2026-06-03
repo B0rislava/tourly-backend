@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tourly Backend
+# TOURLY Backend
 
 ### *Tour Management Platform*
 
@@ -12,8 +12,6 @@
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
 
 [Features](#key-features) • [Tech Stack](#tech-stack) • [Setup](#setup--installation) • [API Docs](#api-documentation)
-
-</div>
 
 ---
 
@@ -41,6 +39,8 @@
 </tr>
 </table>
 </div>
+</div>
+
 
 ---
 
