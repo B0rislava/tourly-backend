@@ -1,25 +1,23 @@
 <div align="center">
 
-# Tourly Backend
+# TOURLY Backend
 
 ### *Tour Management Platform*
 
-[![Spring Boot](https://img.shields.io/badge/Spring--Boot-4.0.0-brightgreen.svg?style=for-the-badge&logo=spring)](https://spring.io/projects/spring-boot)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple.svg?style=for-the-badge&logo=kotlin)](https://kotlinlang.org/)
-[![Java](https://img.shields.io/badge/Java-21-orange.svg?style=for-the-badge&logo=openjdk)](https://adoptium.net/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-blue.svg?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-enabled-2496ED.svg?style=for-the-badge&logo=docker)](https://www.docker.com/)
-
-*Powering the future of travel experiences with robust APIs and real-time capabilities*
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+[![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
 
 [Features](#key-features) • [Tech Stack](#tech-stack) • [Setup](#setup--installation) • [API Docs](#api-documentation)
-
-</div>
 
 ---
 
 ## Related Projects
 
+<div align="center">
 <table>
 <tr>
 <td width="50%" align="center">
@@ -40,54 +38,78 @@
 </td>
 </tr>
 </table>
+</div>
+</div>
+
 
 ---
 
 ## Key Features
 
+<div align="center">
 <table>
 <tr>
-<td width="50%">
+<td align="center" width="25%">
 
-### **Security & Auth**
+#### 🔐 Security & Auth
 - JWT-based authentication
 - OAuth2 Google integration
 - Role-based access control
 
-### **Tour Management**
+</td>
+<td align="center" width="25%">
+
+#### 🗺️ Tour Management
 - Create & update tours
 - Category & tag support
 - Advanced discovery features
 
-### **Real-time Communication**
+</td>
+<td align="center" width="25%">
+
+#### 💬 Real-time Communication
 - WebSocket-powered chat
 - Guide-traveler messaging
 - Instant notifications
 
-### **Engagement**
+</td>
+<td align="center" width="25%">
+
+#### 🔔 Engagement
 - Push notification system
 - Email automation
 - Activity tracking
 
 </td>
-<td width="50%">
+</tr>
+<tr>
+<td align="center" width="25%">
 
-### **Booking System**
+#### 📅 Booking System
 - Full lifecycle management
 - Reservation handling
 - Payment integration ready
 
-### **Reviews & Ratings**
+</td>
+<td align="center" width="25%">
+
+#### ⭐ Reviews & Ratings
 - Community feedback
 - Rating aggregation
 - Review moderation
 
-### **Media Handling**
+</td>
+<td align="center" width="25%">
+
+#### 🖼️ Media Handling
 - Cloudinary integration
 - Image optimization
 - Multi-format support
 
-### **Email Services**
+</td>
+<td align="center" width="25%">
+
+#### 📧 Email Services
 - Verification emails
 - Transactional messages
 - Template management
@@ -95,6 +117,7 @@
 </td>
 </tr>
 </table>
+</div>
 
 ---
 
@@ -145,9 +168,9 @@ api/
 Ensure you have the following installed:
 
 ```bash
-✓ JDK 21 (Eclipse Temurin recommended)
-✓ PostgreSQL (Default port: 5434)
-✓ Gradle 9.2.1 (Wrapper included)
+- JDK 21 (Eclipse Temurin recommended)
+- PostgreSQL (Default port: 5434)
+- Gradle 9.2.1 (Wrapper included)
 ```
 
 ### Environment Configuration
