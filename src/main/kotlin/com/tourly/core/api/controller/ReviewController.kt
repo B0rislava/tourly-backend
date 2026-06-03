@@ -63,4 +63,12 @@ class ReviewController(
         val reviewDtos = reviews.map { ReviewMapper.toDto(it) }
         return ResponseEntity.ok(reviewDtos)
     }
+
+    @Operation(summary = "Get reviews for traveler", description = "Fetches all reviews for a specific traveler")
+    @GetMapping("/travelers/{travelerId}")
+    fun getReviewsForTraveler(@PathVariable travelerId: Long): ResponseEntity<List<ReviewDto>> {
+        val reviews = reviewService.getReviewsForTraveler(travelerId)
+        val reviewDtos = reviews.map { ReviewMapper.toDto(it) }
+        return ResponseEntity.ok(reviewDtos)
+    }
 }

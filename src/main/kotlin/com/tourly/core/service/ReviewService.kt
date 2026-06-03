@@ -96,4 +96,8 @@ class ReviewService(
     fun getReviewsForGuide(guideId: Long): List<ReviewEntity> {
         return reviewRepository.findByGuideId(guideId)
     }
+
+    fun getReviewsForTraveler(travelerId: Long): List<ReviewEntity> {
+        return reviewRepository.findByReviewerId(travelerId)
+    }
 }
