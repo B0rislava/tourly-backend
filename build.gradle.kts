@@ -61,6 +61,9 @@ dependencies {
 	// Google API Client for Auth
 	implementation("com.google.api-client:google-api-client:2.7.0")
 
+	// Bucket4j Rate Limiting
+	implementation("com.bucket4j:bucket4j-core:8.10.1")
+
 	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-webmvc-test")
