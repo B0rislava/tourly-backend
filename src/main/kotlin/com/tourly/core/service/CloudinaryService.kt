@@ -34,6 +34,7 @@ class CloudinaryService(
                     "public_id", publicId,
                     "overwrite", true,
                     "resource_type", "image",
+                    "allowed_formats", "png,jpg,jpeg,webp",
                     "transformation", transformation
                 )
             ) as Map<String, Any>
@@ -45,9 +46,13 @@ class CloudinaryService(
     }
 
     private fun validateFile(file: MultipartFile) {
+        // 1. Check if file is empty
+        if (file.isEmpty) {
+            throw IllegalArgumentException("File cannot be empty")
+        }
 
 
-        // 2. Validate MIME type
+        // 2. Validate MIME type header
         val contentType = file.contentType ?: throw IllegalArgumentException("Invalid file type")
         if (!contentType.startsWith("image/")) {
             throw IllegalArgumentException("Only image files are allowed")
